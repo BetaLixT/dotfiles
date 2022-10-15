@@ -1,1 +1,38 @@
+i3-wm.client.focused.color.border: #16161D
+i3-wm.client.focused.color.text: #DCD7BA
+i3-wm.client.focused.color.indicator: #268bd2
 i3-wm.client.focused.color.child_border: #e6c384
+
+i3-wm.client.focused_inactive.color.border: #16161D
+i3-wm.client.focused_inactive.color.background: #1F1F28
+i3-wm.client.focused_inactive.color.text: #839496
+i3-wm.client.focused_inactive.color.indicator: #1F1F28
+i3-wm.client.focused_inactive.color.child_border: #16161D
+
+i3-wm.client.unfocused.color.border: #16161D
+i3-wm.client.unfocused.color.background: #1F1F28
+i3-wm.client.unfocused.color.text: #839496
+i3-wm.client.unfocused.color.indicator: #1F1F28
+i3-wm.client.unfocused.color.child_border: #16161D
+
+i3-wm.client.urgent.color.border: #16161D
+i3-wm.client.urgent.color.background: #C34043
+i3-wm.client.urgent.color.text: #DCD7BA
+i3-wm.client.urgent.color.indicator: #16161D
+i3-wm.client.urgent.color.child_border: #e6c384
+
+i3-wm.bar.background.color: #1F1F28
+i3-wm.bar.statusline.color: #727169
+i3-wm.bar.separator.color: #268bd2
+
+i3-wm.bar.workspace.focused.border.color: #1F1F28
+i3-wm.bar.workspace.focused.background.color: #1F1F28
+i3-wm.bar.workspace.focused.text.color: #DCD7BA
+
+i3-wm.bar.workspace.active.border.color: #1F1F28
+i3-wm.bar.workspace.active.background.color: #1F1F28
+i3-wm.bar.workspace.active.text.color: #DCD7BA
+
+i3-wm.bar.workspace.urgent.border.color: #C34043
+i3-wm.bar.workspace.urgent.background.color: #C34043
+i3-wm.bar.workspace.urgent.text.color: #DCD7BA
