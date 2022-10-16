@@ -694,7 +694,7 @@ bindsym $mod+Print exec --no-startup-id maim --window $(xdotool getactivewindow)
 bindsym Shift+Print exec --no-startup-id maim --select | xclip -selection clipboard -t image/png
 
 # window border
-for_window [class=.*] border pixel 3
+for_window [class=.*] border pixel 2
 
 # changing i3xrocks location
 # set $i3xrocks_config ~/dotfiles/regolith/i3xrocks/conf.d
@@ -702,3 +702,6 @@ for_window [class=.*] border pixel 3
 # move focused workspace between monitors
 bindsym $mod+Ctrl+greater move workspace to output right
 bindsym $mod+Ctrl+less move workspace to output left
+
+# wallpaper
+exec --no-startup-id feh --bg-fill $HOME/.config/wallpapers/shop.png

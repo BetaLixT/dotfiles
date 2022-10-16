@@ -32,6 +32,10 @@ ln -sfn $DIR/nvim $HOME/.config
 # remove_non_dirlink $HOME/.config/regolith2
 # ln -sfn $DIR/regolith2 $HOME/.config
 
+# wallpapers
+remove_non_dirlink $HOME/.config/wallpapers
+ln -sfn $DIR/wallpapers $HOME/.config
+
 # Kitty config
 remove_non_dirlink $HOME/.config/kitty
 ln -sfn $DIR/kitty $HOME/.config
