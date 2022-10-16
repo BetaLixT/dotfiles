@@ -373,8 +373,7 @@ bindsym $mod+$i3-wm.binding.reload reload
 
 ## Session // Refresh Session // <><Shift> r ##
 set_from_resource $i3-wm.binding.refresh i3-wm.binding.refresh Shift+r
-# set_from_resource $i3-wm.program.refresh_ui i3-wm.program.refresh_ui /usr/bin/regolith-look refresh
-bindsym $mod+$i3-wm.binding.refresh exec --no-startup-id $i3-wm.program.refresh_ui
+bindsym $mod+$i3-wm.binding.refresh restart
 
 ## Session // Restart i3 // <><Ctrl> r ##
 set_from_resource $i3-wm.binding.restart i3-wm.binding.restart Ctrl+r
@@ -619,7 +618,7 @@ set_from_resource $i3-wm.bar.stripworkspacenumbers i3-wm.bar.stripworkspacenumbe
 set_from_resource $i3-wm.bar.mode i3-wm.bar.mode dock
 
 # i3xrocks config file. Override this for a custom status bar generator.
-# set_from_resource $i3-wm.bar.status_command i3-wm.bar.status_command i3xrocks -u ~/.config/regolith/i3xrocks/conf.d -d /etc/regolith/i3xrocks/conf.d
+set_from_resource $i3-wm.bar.status_command i3-wm.bar.status_command i3blocks
 
 # The bar configuration
 bar {

@@ -18,8 +18,12 @@ remove_non_dirlink $HOME/.config/nvim
 ln -sfn $DIR/nvim $HOME/.config
 
 # i3
- remove_non_dirlink $HOME/.config/i3
- ln -sfn $DIR/i3 $HOME/.config
+remove_non_dirlink $HOME/.config/i3
+ln -sfn $DIR/i3 $HOME/.config
+
+# i3blocks
+remove_non_dirlink $HOME/.config/i3blocks
+ln -sfn $DIR/i3blocks $HOME/.config
 
 # regolith folder
 # mkdir -p $HOME/.config/regolith2
