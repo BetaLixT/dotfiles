@@ -70,7 +70,7 @@ ZSH_THEME="alanpeabody"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+plugins=(git zsh-z)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -119,6 +119,7 @@ export DOTNET_ROOT=/home/dcruza/.dotnet
 export PATH=/usr/local/go/bin:$PATH
 export PATH=/home/dcruza/bin:$PATH
 export PATH=$HOME/go/bin:$PATH
+export PATH=$HOME/.cargo/bin:$PATH
 export EDITOR=nvim
 
 export JAVA_HOME=/usr/bin/java
