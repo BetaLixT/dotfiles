@@ -70,7 +70,7 @@ ZSH_THEME="alanpeabody"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git zsh-z)
+plugins=(git z)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -100,6 +100,18 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 #
+zstyle ':completion:*' completer _complete _ignored
+zstyle :compinstall filename '/home/dcruza/.zshrc'
+
+autoload -Uz compinit
+compinit
+# End of lines added by compinstall
+# Lines configured by zsh-newuser-install
+HISTFILE=~/.histfile
+HISTSIZE=10000
+SAVEHIST=100000
+unsetopt beep
+
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
@@ -112,7 +124,7 @@ alias btw="neofetch"
 
 alias kube="kubectl"
 
-unalias gm
+# unalias gm
 
 export PATH=$HOME/.dotnet:$PATH
 export DOTNET_ROOT=/home/dcruza/.dotnet
