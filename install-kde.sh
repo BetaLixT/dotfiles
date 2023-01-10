@@ -18,8 +18,8 @@ remove_non_dirlink $HOME/.config/nvim
 ln -sfn $DIR/nvim $HOME/.config
 
 # i3
-# remove_non_dirlink $HOME/.config/i3
-# ln -sfn $DIR/i3 $HOME/.config
+remove_non_dirlink $HOME/.config/i3
+ln -sfn $DIR/i3kde $HOME/.config/i3
 
 # i3blocks
 # remove_non_dirlink $HOME/.config/i3blocks
@@ -55,3 +55,12 @@ ln -s $DIR/.tmux.conf $HOME/.tmux.conf
 # Xresources
 # remove_non_dirlink $HOME/.Xresources
 # ln -s $DIR/.Xresources $HOME/.Xresources
+#
+## systemd
+remove_non_dirlink $HOME/.config/systemd
+ln -sfn $DIR/systemd $HOME/.config
+
+# alacritty
+remove_non_dirlink $HOME/.config/alacritty
+ln -sfn $DIR/alacritty $HOME/.config
+
