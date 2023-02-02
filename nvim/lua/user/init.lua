@@ -190,6 +190,18 @@ local config = {
       ["<leader>bc"] = { "<cmd>BufferLinePickClose<cr>", desc = "Pick to close" },
       ["<leader>bj"] = { "<cmd>BufferLinePick<cr>", desc = "Pick to jump" },
       ["<leader>bt"] = { "<cmd>BufferLineSortByTabs<cr>", desc = "Sort by tabs" },
+      
+      ["<leader>dd"] = { "<cmd>call vimspector#Launch()<cr>", desc = "Launch debugger" },
+      ["<leader>dr"] = { "<cmd>call vimspector#Reset()<cr>", desc = "Reset debugger" },
+      ["<leader>dc"] = { "<cmd>call vimspector#Continue()<cr>", desc = "Continue debugger" },
+      
+      ["<leader>dt"] = { "<cmd>call vimspector#ToggleBreakpoint()<cr>", desc = "Toggle breakpoints" },
+      ["<leader>dT"] = { "<cmd>call vimspector#ClearBreakpoints()<cr>", desc = "Clear all breakpoints" },
+      
+      ["<leader>dk"] = { "<cmd>call vimspector#Restart()<cr>", desc = "Restart debugger" },
+      ["<leader>dh"] = { "<cmd>call vimspector#StepOut()<cr>", desc = "Step out debugger" },
+      ["<leader>dl"] = { "<cmd>call vimspector#StepInto()<cr>", desc = "Step into debugger" },
+      ["<leader>dj"] = { "<cmd>call vimspector#StepOver()<cr>", desc = "Step over debugger" },
       -- quick save
       -- ["<C-s>"] = { ":w!<cr>", desc = "Save File" },  -- change description but the same command
     },

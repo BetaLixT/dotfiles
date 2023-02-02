@@ -27,7 +27,7 @@ maps.n["<leader>pA"] = { "<cmd>AstroUpdate<cr>", desc = "AstroNvim Update" }
 maps.n["<leader>pv"] = { "<cmd>AstroVersion<cr>", desc = "AstroNvim Version" }
 
 -- Alpha
-if is_available "alpha-nvim" then maps.n["<leader>d"] = { "<cmd>Alpha<cr>", desc = "Alpha Dashboard" } end
+if is_available "alpha-nvim" then maps.n["<leader>D"] = { "<cmd>Alpha<cr>", desc = "Alpha Dashboard" } end
 
 -- Bufdelete
 if is_available "bufdelete.nvim" then
