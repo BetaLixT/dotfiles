@@ -202,6 +202,8 @@ local config = {
       ["<leader>dh"] = { "<cmd>call vimspector#StepOut()<cr>", desc = "Step out debugger" },
       ["<leader>dl"] = { "<cmd>call vimspector#StepInto()<cr>", desc = "Step into debugger" },
       ["<leader>dj"] = { "<cmd>call vimspector#StepOver()<cr>", desc = "Step over debugger" },
+
+      ["<leader>hx"] = { "<cmd><Plug>RestNvim<cr>", desc = "run request" },
       -- quick save
       -- ["<C-s>"] = { ":w!<cr>", desc = "Save File" },  -- change description but the same command
     },
@@ -228,7 +230,8 @@ local config = {
       --   end,
       -- },
       { "rebelot/kanagawa.nvim" },
-      { "puremourning/vimspector" }
+      { "puremourning/vimspector" },
+      { "rest-nvim/rest.nvim" }
 
       -- We also support a key value style plugin definition similar to NvChad:
       -- ["ray-x/lsp_signature.nvim"] = {
