@@ -1,20 +1,30 @@
 --- ### AstroNvim UI Options
 --
--- This module is automatically loaded by AstroNvim on during it's initialization into global variable `astronvim.ui`
+--  Utility functions for easy UI toggles.
 --
--- This module can also be manually loaded with `local updater = require("core.utils").ui`
+-- This module can be loaded with `local ui = require("core.utils.ui")`
 --
 -- @module core.utils.ui
 -- @see core.utils
 -- @copyright 2022
 -- @license GNU General Public License v3.0
 
-astronvim.ui = {}
+local M = {}
 
-local bool2str = function(bool) return bool and "on" or "off" end
+local function bool2str(bool) return bool and "on" or "off" end
+
+local function ui_notify(str)
+  if vim.g.ui_notifications_enabled then require("core.utils").notify(str) end
+end
+
+--- Toggle notifications for UI toggles
+function M.toggle_ui_notifications()
+  vim.g.ui_notifications_enabled = not vim.g.ui_notifications_enabled
+  ui_notify(string.format("ui notifications %s", bool2str(vim.g.ui_notifications_enabled)))
+end
 
 --- Toggle autopairs
-function astronvim.ui.toggle_autopairs()
+function M.toggle_autopairs()
   local ok, autopairs = pcall(require, "nvim-autopairs")
   if ok then
     if autopairs.state.disabled then
@@ -23,14 +33,14 @@ function astronvim.ui.toggle_autopairs()
       autopairs.disable()
     end
     vim.g.autopairs_enabled = autopairs.state.disabled
-    astronvim.notify(string.format("autopairs %s", bool2str(not autopairs.state.disabled)))
+    ui_notify(string.format("autopairs %s", bool2str(not autopairs.state.disabled)))
   else
-    astronvim.notify "autopairs not available"
+    ui_notify "autopairs not available"
   end
 end
 
 --- Toggle diagnostics
-function astronvim.ui.toggle_diagnostics()
+function M.toggle_diagnostics()
   local status = "on"
   if vim.g.status_diagnostics_enabled then
     if vim.g.diagnostics_enabled then
@@ -45,30 +55,74 @@ function astronvim.ui.toggle_diagnostics()
     vim.g.status_diagnostics_enabled = true
   end
 
-  vim.diagnostic.config(astronvim.lsp.diagnostics[bool2str(vim.g.diagnostics_enabled)])
-  astronvim.notify(string.format("diagnostics %s", status))
+  vim.diagnostic.config(require("core.utils.lsp").diagnostics[bool2str(vim.g.diagnostics_enabled)])
+  ui_notify(string.format("diagnostics %s", status))
 end
 
 --- Toggle background="dark"|"light"
-function astronvim.ui.toggle_background()
+function M.toggle_background()
   vim.go.background = vim.go.background == "light" and "dark" or "light"
-  astronvim.notify(string.format("background=%s", vim.go.background))
+  ui_notify(string.format("background=%s", vim.go.background))
 end
 
 --- Toggle cmp entrirely
-function astronvim.ui.toggle_cmp()
+function M.toggle_cmp()
   vim.g.cmp_enabled = not vim.g.cmp_enabled
-  local ok, cmp = pcall(require, "cmp")
-  if ok then
-    cmp.setup { enabled = vim.g.cmp_enabled }
-    astronvim.notify(string.format("completion %s", bool2str(vim.g.cmp_enabled)))
-  else
-    astronvim.notify "completion not available"
+  local ok, _ = pcall(require, "cmp")
+  ui_notify(ok and string.format("completion %s", bool2str(vim.g.cmp_enabled)) or "completion not available")
+end
+
+--- Toggle auto format
+function M.toggle_autoformat()
+  vim.g.autoformat_enabled = not vim.g.autoformat_enabled
+  ui_notify(string.format("Global autoformatting %s", bool2str(vim.g.autoformat_enabled)))
+end
+
+--- Toggle buffer local auto format
+function M.toggle_buffer_autoformat()
+  local old_val = vim.b.autoformat_enabled
+  if old_val == nil then old_val = vim.g.autoformat_enabled end
+  vim.b.autoformat_enabled = not old_val
+  ui_notify(string.format("Buffer autoformatting %s", bool2str(vim.b.autoformat_enabled)))
+end
+
+--- Toggle codelens refresh
+function M.toggle_codelens()
+  vim.g.codelens_enabled = not vim.g.codelens_enabled
+  ui_notify(string.format("CodeLens refresh %s", bool2str(vim.g.codelens_enabled)))
+end
+
+--- Toggle showtabline=2|0
+function M.toggle_tabline()
+  vim.opt.showtabline = vim.opt.showtabline:get() == 0 and 2 or 0
+  ui_notify(string.format("tabline %s", bool2str(vim.opt.showtabline:get() == 2)))
+end
+
+--- Toggle conceal=2|0
+function M.toggle_conceal()
+  vim.opt.conceallevel = vim.opt.conceallevel:get() == 0 and 2 or 0
+  ui_notify(string.format("conceal %s", bool2str(vim.opt.conceallevel:get() == 2)))
+end
+
+--- Toggle laststatus=3|2|0
+function M.toggle_statusline()
+  local laststatus = vim.opt.laststatus:get()
+  local status
+  if laststatus == 0 then
+    vim.opt.laststatus = 2
+    status = "local"
+  elseif laststatus == 2 then
+    vim.opt.laststatus = 3
+    status = "global"
+  elseif laststatus == 3 then
+    vim.opt.laststatus = 0
+    status = "off"
   end
+  ui_notify(string.format("statusline %s", status))
 end
 
 --- Toggle signcolumn="auto"|"no"
-function astronvim.ui.toggle_signcolumn()
+function M.toggle_signcolumn()
   if vim.wo.signcolumn == "no" then
     vim.wo.signcolumn = "yes"
   elseif vim.wo.signcolumn == "yes" then
@@ -76,23 +130,26 @@ function astronvim.ui.toggle_signcolumn()
   else
     vim.wo.signcolumn = "no"
   end
-  astronvim.notify(string.format("signcolumn=%s", vim.wo.signcolumn))
+  ui_notify(string.format("signcolumn=%s", vim.wo.signcolumn))
 end
 
 --- Set the indent and tab related numbers
-function astronvim.ui.set_indent()
-  local indent = tonumber(vim.fn.input "Set indent value (>0 expandtab, <=0 noexpandtab): ")
-  if not indent or indent == 0 then return end
-  vim.bo.expandtab = (indent > 0) -- local to buffer
-  indent = math.abs(indent)
-  vim.bo.tabstop = indent -- local to buffer
-  vim.bo.softtabstop = indent -- local to buffer
-  vim.bo.shiftwidth = indent -- local to buffer
-  astronvim.notify(string.format("indent=%d %s", indent, vim.bo.expandtab and "expandtab" or "noexpandtab"))
+function M.set_indent()
+  local input_avail, input = pcall(vim.fn.input, "Set indent value (>0 expandtab, <=0 noexpandtab): ")
+  if input_avail then
+    local indent = tonumber(input)
+    if not indent or indent == 0 then return end
+    vim.bo.expandtab = (indent > 0) -- local to buffer
+    indent = math.abs(indent)
+    vim.bo.tabstop = indent -- local to buffer
+    vim.bo.softtabstop = indent -- local to buffer
+    vim.bo.shiftwidth = indent -- local to buffer
+    ui_notify(string.format("indent=%d %s", indent, vim.bo.expandtab and "expandtab" or "noexpandtab"))
+  end
 end
 
 --- Change the number display modes
-function astronvim.ui.change_number()
+function M.change_number()
   local number = vim.wo.number -- local to window
   local relativenumber = vim.wo.relativenumber -- local to window
   if not number and not relativenumber then
@@ -104,25 +161,29 @@ function astronvim.ui.change_number()
   else -- not number and relativenumber
     vim.wo.relativenumber = false
   end
-  astronvim.notify(
-    string.format("number=%s, relativenumber=%s", bool2str(vim.wo.number), bool2str(vim.wo.relativenumber))
-  )
+  ui_notify(string.format("number %s, relativenumber %s", bool2str(vim.wo.number), bool2str(vim.wo.relativenumber)))
 end
 
 --- Toggle spell
-function astronvim.ui.toggle_spell()
+function M.toggle_spell()
   vim.wo.spell = not vim.wo.spell -- local to window
-  astronvim.notify(string.format("spell=%s", bool2str(vim.wo.spell)))
+  ui_notify(string.format("spell %s", bool2str(vim.wo.spell)))
+end
+
+--- Toggle paste
+function M.toggle_paste()
+  vim.opt.paste = not vim.opt.paste:get() -- local to window
+  ui_notify(string.format("paste %s", bool2str(vim.opt.paste:get())))
 end
 
 --- Toggle wrap
-function astronvim.ui.toggle_wrap()
+function M.toggle_wrap()
   vim.wo.wrap = not vim.wo.wrap -- local to window
-  astronvim.notify(string.format("wrap=%s", bool2str(vim.wo.wrap)))
+  ui_notify(string.format("wrap %s", bool2str(vim.wo.wrap)))
 end
 
 --- Toggle syntax highlighting and treesitter
-function astronvim.ui.toggle_syntax()
+function M.toggle_syntax()
   local ts_avail, parsers = pcall(require, "nvim-treesitter.parsers")
   if vim.g.syntax_on then -- global var for on//off
     if ts_avail and parsers.has_parser() then vim.cmd.TSBufDisable "highlight" end
@@ -131,11 +192,13 @@ function astronvim.ui.toggle_syntax()
     if ts_avail and parsers.has_parser() then vim.cmd.TSBufEnable "highlight" end
     vim.cmd.syntax "on" -- set vim.g.syntax_on = true
   end
-  astronvim.notify(string.format("syntax %s", bool2str(vim.g.syntax_on)))
+  ui_notify(string.format("syntax %s", bool2str(vim.g.syntax_on)))
 end
 
 --- Toggle URL/URI syntax highlighting rules
-function astronvim.ui.toggle_url_match()
+function M.toggle_url_match()
   vim.g.highlighturl_enabled = not vim.g.highlighturl_enabled
-  astronvim.set_url_match()
+  require("core.utils").set_url_match()
 end
+
+return M
