@@ -1,80 +1,97 @@
---- ### AstroNvim LSP
+--- ### AstroNvim LSP Utils
 --
--- This module is automatically loaded by AstroNvim on during it's initialization into global variable `astronvim.lsp`
+-- LSP related utility functions to use within AstroNvim and user configurations.
 --
--- This module can also be manually loaded with `local updater = require("core.utils").lsp`
+-- This module can be loaded with `local lsp_utils = require("core.utils.lsp")`
 --
 -- @module core.utils.lsp
 -- @see core.utils
 -- @copyright 2022
 -- @license GNU General Public License v3.0
 
-astronvim.lsp = {}
-local sign_define = vim.fn.sign_define
+local M = {}
 local tbl_contains = vim.tbl_contains
-local user_plugin_opts = astronvim.user_plugin_opts
-local conditional_func = astronvim.conditional_func
-local user_registration = user_plugin_opts("lsp.server_registration", nil, false)
-local skip_setup = user_plugin_opts "lsp.skip_setup"
+local tbl_isempty = vim.tbl_isempty
+local user_opts = astronvim.user_opts
 
-local signs = {
-  { name = "DiagnosticSignError", text = astronvim.get_icon "DiagnosticError" },
-  { name = "DiagnosticSignWarn", text = astronvim.get_icon "DiagnosticWarn" },
-  { name = "DiagnosticSignHint", text = astronvim.get_icon "DiagnosticHint" },
-  { name = "DiagnosticSignInfo", text = astronvim.get_icon "DiagnosticInfo" },
-}
-for _, sign in ipairs(signs) do
-  sign_define(sign.name, { texthl = sign.name, text = sign.text, numhl = "" })
-end
+local utils = require "core.utils"
+local conditional_func = utils.conditional_func
+local is_available = utils.is_available
 
-astronvim.lsp.formatting = astronvim.user_plugin_opts("lsp.formatting", { format_on_save = true, disabled = {} })
+local server_config = "lsp.config."
+local setup_handlers =
+  user_opts("lsp.setup_handlers", { function(server, opts) require("lspconfig")[server].setup(opts) end })
 
-astronvim.lsp.format_opts = vim.deepcopy(astronvim.lsp.formatting)
-astronvim.lsp.format_opts.disabled = nil
-astronvim.lsp.format_opts.filter = function(client)
-  local filter = astronvim.lsp.formatting.filter
-  local disabled = astronvim.lsp.formatting.disabled
-  -- if client is fully disabled, return false
-  if vim.tbl_contains(disabled, client.name) then return false end
-  -- if filter function is defined and client is filtered out, return false
-  if type(filter) == "function" and not filter(client) then return false end
-  -- client has passed all checks, enable it for formatting
-  return true
-end
+M.diagnostics = { off = {}, on = {} }
 
-astronvim.lsp.diagnostics = {
-  off = {
-    underline = false,
-    virtual_text = false,
-    signs = false,
-    update_in_insert = false,
-  },
-  on = user_plugin_opts("diagnostics", {
-    virtual_text = true,
-    signs = { active = signs },
-    update_in_insert = true,
-    underline = true,
-    severity_sort = true,
-    float = {
-      focused = false,
-      style = "minimal",
-      border = "rounded",
-      source = "always",
-      header = "",
-      prefix = "",
+M.setup_diagnostics = function(signs)
+  M.diagnostics = {
+    off = {
+      underline = false,
+      virtual_text = false,
+      signs = false,
+      update_in_insert = false,
     },
-  }),
-}
+    on = astronvim.user_opts("diagnostics", {
+      virtual_text = true,
+      signs = { active = signs },
+      update_in_insert = true,
+      underline = true,
+      severity_sort = true,
+      float = {
+        focused = false,
+        style = "minimal",
+        border = "rounded",
+        source = "always",
+        header = "",
+        prefix = "",
+      },
+    }),
+  }
+
+  vim.diagnostic.config(M.diagnostics[vim.g.diagnostics_enabled and "on" or "off"])
+end
+
+M.formatting = user_opts("lsp.formatting", { format_on_save = { enabled = true }, disabled = {} })
+if type(M.formatting.format_on_save) == "boolean" then
+  M.formatting.format_on_save = { enabled = M.formatting.format_on_save }
+end
+
+M.format_opts = vim.deepcopy(M.formatting)
+M.format_opts.disabled = nil
+M.format_opts.format_on_save = nil
+M.format_opts.filter = function(client)
+  local filter = M.formatting.filter
+  local disabled = M.formatting.disabled or {}
+  -- check if client is fully disabled or filtered by function
+  return not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
+end
 
 --- Helper function to set up a given server with the Neovim LSP client
 -- @param server the name of the server to be setup
-astronvim.lsp.setup = function(server)
-  if not tbl_contains(skip_setup, server) then
-    local opts = astronvim.lsp.server_settings(server)
-    if type(user_registration) == "function" then
-      user_registration(server, opts)
-    else
-      require("lspconfig")[server].setup(opts)
+M.setup = function(server)
+  -- if server doesn't exist, set it up from user server definition
+  local config_avail, config = pcall(require, "lspconfig.server_configurations." .. server)
+  if not config_avail or not config.default_config then
+    local server_definition = user_opts(server_config .. server)
+    if server_definition.cmd then require("lspconfig.configs")[server] = { default_config = server_definition } end
+  end
+  local opts = M.config(server)
+  local setup_handler = setup_handlers[server] or setup_handlers[1]
+  if setup_handler then setup_handler(server, opts) end
+end
+
+local function add_buffer_autocmd(augroup, bufnr, autocmds)
+  if not vim.tbl_islist(autocmds) then autocmds = { autocmds } end
+  local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
+  if not cmds_found or vim.tbl_isempty(cmds) then
+    vim.api.nvim_create_augroup(augroup, { clear = false })
+    for _, autocmd in ipairs(autocmds) do
+      local events = autocmd.events
+      autocmd.events = nil
+      autocmd.group = augroup
+      autocmd.buffer = bufnr
+      vim.api.nvim_create_autocmd(events, autocmd)
     end
   end
 end
@@ -82,7 +99,7 @@ end
 --- The `on_attach` function used by AstroNvim
 -- @param client the LSP client details when attaching
 -- @param bufnr the number of the buffer that the LSP client is attaching to
-astronvim.lsp.on_attach = function(client, bufnr)
+M.on_attach = function(client, bufnr)
   local capabilities = client.server_capabilities
   local lsp_mappings = {
     n = {
@@ -94,9 +111,29 @@ astronvim.lsp.on_attach = function(client, bufnr)
     v = {},
   }
 
+  if is_available "mason-lspconfig.nvim" then
+    lsp_mappings.n["<leader>li"] = { "<cmd>LspInfo<cr>", desc = "LSP information" }
+  end
+
+  if is_available "null-ls.nvim" then
+    lsp_mappings.n["<leader>lI"] = { "<cmd>NullLsInfo<cr>", desc = "Null-ls information" }
+  end
+
   if capabilities.codeActionProvider then
     lsp_mappings.n["<leader>la"] = { function() vim.lsp.buf.code_action() end, desc = "LSP code action" }
-    lsp_mappings.v["<leader>la"] = { function() vim.lsp.buf.range_code_action() end, desc = "Range LSP code action" }
+    lsp_mappings.v["<leader>la"] = lsp_mappings.n["<leader>la"]
+  end
+
+  if capabilities.codeLensProvider then
+    add_buffer_autocmd("lsp_codelens_refresh", bufnr, {
+      events = { "InsertLeave", "BufEnter" },
+      callback = function()
+        if vim.g.codelens_enabled then vim.lsp.codelens.refresh() end
+      end,
+    })
+    vim.lsp.codelens.refresh()
+    lsp_mappings.n["<leader>ll"] = { function() vim.lsp.codelens.refresh() end, desc = "LSP CodeLens refresh" }
+    lsp_mappings.n["<leader>lL"] = { function() vim.lsp.codelens.run() end, desc = "LSP CodeLens run" }
   end
 
   if capabilities.declarationProvider then
@@ -107,48 +144,51 @@ astronvim.lsp.on_attach = function(client, bufnr)
     lsp_mappings.n["gd"] = { function() vim.lsp.buf.definition() end, desc = "Show the definition of current symbol" }
   end
 
-  if capabilities.documentFormattingProvider then
+  if capabilities.documentFormattingProvider and not tbl_contains(M.formatting.disabled, client.name) then
     lsp_mappings.n["<leader>lf"] = {
-      function() vim.lsp.buf.format(astronvim.lsp.format_opts) end,
-      desc = "Format code",
+      function() vim.lsp.buf.format(M.format_opts) end,
+      desc = "Format buffer",
     }
-    lsp_mappings.v["<leader>lf"] = {
-      function()
-        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, true, true), "n", false)
-        vim.lsp.buf.range_formatting(astronvim.lsp.format_opts)
-      end,
-      desc = "Range format code",
-    }
+    lsp_mappings.v["<leader>lf"] = lsp_mappings.n["<leader>lf"]
 
     vim.api.nvim_buf_create_user_command(
       bufnr,
       "Format",
-      function() vim.lsp.buf.format(astronvim.default_tbl({ async = true }, astronvim.lsp.format_opts)) end,
+      function() vim.lsp.buf.format(M.format_opts) end,
       { desc = "Format file with LSP" }
     )
-    if astronvim.lsp.formatting.format_on_save then
-      vim.api.nvim_create_augroup("auto_format", { clear = true })
-      vim.api.nvim_create_autocmd("BufWritePre", {
-        group = "auto_format",
-        desc = "Auto format before save",
-        pattern = "<buffer>",
-        callback = function() vim.lsp.buf.format(astronvim.lsp.format_opts) end,
+    local autoformat = M.formatting.format_on_save
+    local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+    if
+      autoformat.enabled
+      and (tbl_isempty(autoformat.allow_filetypes or {}) or tbl_contains(autoformat.allow_filetypes, filetype))
+      and (tbl_isempty(autoformat.ignore_filetypes or {}) or not tbl_contains(autoformat.ignore_filetypes, filetype))
+    then
+      add_buffer_autocmd("lsp_auto_format", bufnr, {
+        events = "BufWritePre",
+        callback = function()
+          local autoformat_enabled = vim.b.autoformat_enabled
+          if autoformat_enabled == nil then autoformat_enabled = vim.g.autoformat_enabled end
+          if autoformat_enabled then
+            vim.lsp.buf.format(require("core.utils").extend_tbl(M.format_opts, { bufnr = bufnr }))
+          end
+        end,
       })
+      lsp_mappings.n["<leader>uf"] = {
+        function() require("core.utils.ui").toggle_buffer_autoformat() end,
+        desc = "Toggle autoformatting (buffer)",
+      }
+      lsp_mappings.n["<leader>uF"] = {
+        function() require("core.utils.ui").toggle_autoformat() end,
+        desc = "Toggle autoformatting (global)",
+      }
     end
   end
 
   if capabilities.documentHighlightProvider then
-    local highlight_name = vim.fn.printf("lsp_document_highlight_%d", bufnr)
-    vim.api.nvim_create_augroup(highlight_name, {})
-    vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
-      group = highlight_name,
-      buffer = bufnr,
-      callback = function() vim.lsp.buf.document_highlight() end,
-    })
-    vim.api.nvim_create_autocmd("CursorMoved", {
-      group = highlight_name,
-      buffer = bufnr,
-      callback = function() vim.lsp.buf.clear_references() end,
+    add_buffer_autocmd("lsp_document_highlight", bufnr, {
+      { events = { "CursorHold", "CursorHoldI" }, callback = function() vim.lsp.buf.document_highlight() end },
+      { events = "CursorMoved", callback = function() vim.lsp.buf.clear_references() end },
     })
   end
 
@@ -162,6 +202,7 @@ astronvim.lsp.on_attach = function(client, bufnr)
 
   if capabilities.referencesProvider then
     lsp_mappings.n["gr"] = { function() vim.lsp.buf.references() end, desc = "References of current symbol" }
+    lsp_mappings.n["<leader>lR"] = { function() vim.lsp.buf.references() end, desc = "Search references" }
   end
 
   if capabilities.renameProvider then
@@ -176,53 +217,83 @@ astronvim.lsp.on_attach = function(client, bufnr)
     lsp_mappings.n["gT"] = { function() vim.lsp.buf.type_definition() end, desc = "Definition of current type" }
   end
 
-  astronvim.set_mappings(user_plugin_opts("lsp.mappings", lsp_mappings), { buffer = bufnr })
-  if not vim.tbl_isempty(lsp_mappings.v) then
-    astronvim.which_key_register({ v = { ["<leader>"] = { l = { name = "LSP" } } } }, { buffer = bufnr })
+  if capabilities.workspaceSymbolProvider then
+    lsp_mappings.n["<leader>lG"] = { function() vim.lsp.buf.workspace_symbol() end, desc = "Search workspace symbols" }
   end
 
-  local on_attach_override = user_plugin_opts("lsp.on_attach", nil, false)
-  local aerial_avail, aerial = pcall(require, "aerial")
+  if is_available "telescope.nvim" then -- setup telescope mappings if available
+    if lsp_mappings.n.gd then lsp_mappings.n.gd[1] = function() require("telescope.builtin").lsp_definitions() end end
+    if lsp_mappings.n.gI then
+      lsp_mappings.n.gI[1] = function() require("telescope.builtin").lsp_implementations() end
+    end
+    if lsp_mappings.n.gr then lsp_mappings.n.gr[1] = function() require("telescope.builtin").lsp_references() end end
+    if lsp_mappings.n["<leader>lR"] then
+      lsp_mappings.n["<leader>lR"][1] = function() require("telescope.builtin").lsp_references() end
+    end
+    if lsp_mappings.n.gT then
+      lsp_mappings.n.gT[1] = function() require("telescope.builtin").lsp_type_definitions() end
+    end
+    if lsp_mappings.n["<leader>lG"] then
+      lsp_mappings.n["<leader>lG"][1] = function() require("telescope.builtin").lsp_workspace_symbols() end
+    end
+  end
+
+  if not vim.tbl_isempty(lsp_mappings.v) then lsp_mappings.v["<leader>l"] = { name = "LSP" } end
+  utils.set_mappings(user_opts("lsp.mappings", lsp_mappings), { buffer = bufnr })
+
+  local on_attach_override = user_opts("lsp.on_attach", nil, false)
   conditional_func(on_attach_override, true, client, bufnr)
-  conditional_func(aerial.on_attach, aerial_avail, client, bufnr)
 end
 
 --- The default AstroNvim LSP capabilities
-astronvim.lsp.capabilities = vim.lsp.protocol.make_client_capabilities()
-astronvim.lsp.capabilities.textDocument.completion.completionItem.documentationFormat = { "markdown", "plaintext" }
-astronvim.lsp.capabilities.textDocument.completion.completionItem.snippetSupport = true
-astronvim.lsp.capabilities.textDocument.completion.completionItem.preselectSupport = true
-astronvim.lsp.capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
-astronvim.lsp.capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
-astronvim.lsp.capabilities.textDocument.completion.completionItem.deprecatedSupport = true
-astronvim.lsp.capabilities.textDocument.completion.completionItem.commitCharactersSupport = true
-astronvim.lsp.capabilities.textDocument.completion.completionItem.tagSupport = { valueSet = { 1 } }
-astronvim.lsp.capabilities.textDocument.completion.completionItem.resolveSupport = {
+M.capabilities = vim.lsp.protocol.make_client_capabilities()
+M.capabilities.textDocument.completion.completionItem.documentationFormat = { "markdown", "plaintext" }
+M.capabilities.textDocument.completion.completionItem.snippetSupport = true
+M.capabilities.textDocument.completion.completionItem.preselectSupport = true
+M.capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
+M.capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
+M.capabilities.textDocument.completion.completionItem.deprecatedSupport = true
+M.capabilities.textDocument.completion.completionItem.commitCharactersSupport = true
+M.capabilities.textDocument.completion.completionItem.tagSupport = { valueSet = { 1 } }
+M.capabilities.textDocument.completion.completionItem.resolveSupport = {
   properties = { "documentation", "detail", "additionalTextEdits" },
 }
-astronvim.lsp.capabilities = user_plugin_opts("lsp.capabilities", astronvim.lsp.capabilities)
-astronvim.lsp.flags = user_plugin_opts "lsp.flags"
+M.capabilities = user_opts("lsp.capabilities", M.capabilities)
+M.flags = user_opts "lsp.flags"
 
---- Get the server settings for a given language server to be provided to the server's `setup()` call
+--- Get the server configuration for a given language server to be provided to the server's `setup()` call
 -- @param  server_name the name of the server
 -- @return the table of LSP options used when setting up the given language server
-function astronvim.lsp.server_settings(server_name)
+function M.config(server_name)
   local server = require("lspconfig")[server_name]
-  local opts = user_plugin_opts( -- get user server-settings
-    "lsp.server-settings." .. server_name,
-    user_plugin_opts("server-settings." .. server_name, { -- get default server-settings
-      capabilities = vim.tbl_deep_extend("force", astronvim.lsp.capabilities, server.capabilities or {}),
-      flags = vim.tbl_deep_extend("force", astronvim.lsp.flags, server.flags or {}),
-    }, true, "configs")
+  local lsp_opts = require("core.utils").extend_tbl(
+    { capabilities = server.capabilities, flags = server.flags },
+    { capabilities = M.capabilities, flags = M.flags }
   )
+  if server_name == "jsonls" then -- by default add json schemas
+    local schemastore_avail, schemastore = pcall(require, "schemastore")
+    if schemastore_avail then
+      lsp_opts.settings = { json = { schemas = schemastore.json.schemas(), validate = { enable = true } } }
+    end
+  end
+  if server_name == "lua_ls" then -- by default initialize neodev and disable third party checking
+    pcall(require, "neodev")
+    lsp_opts.before_init = function(param, config)
+      if vim.b.neodev_enabled and param.rootPath:match(astronvim.install.config) then
+        table.insert(config.settings.Lua.workspace.library, astronvim.install.home .. "/lua")
+      end
+    end
+    lsp_opts.settings = { Lua = { workspace = { checkThirdParty = false } } }
+  end
+  local opts = user_opts(server_config .. server_name, lsp_opts)
   local old_on_attach = server.on_attach
   local user_on_attach = opts.on_attach
   opts.on_attach = function(client, bufnr)
     conditional_func(old_on_attach, true, client, bufnr)
-    astronvim.lsp.on_attach(client, bufnr)
+    M.on_attach(client, bufnr)
     conditional_func(user_on_attach, true, client, bufnr)
   end
   return opts
 end
 
-return astronvim.lsp
+return M
