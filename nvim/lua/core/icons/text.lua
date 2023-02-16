@@ -16,9 +16,6 @@ return {
   Ellipsis = "...",
   FileModified = "*",
   FileReadOnly = "[lock]",
-  FoldClosed = "+",
-  FoldOpened = "-",
-  FoldSeparator = " ",
   FolderClosed = "[D]",
   FolderEmpty = "[E]",
   FolderOpen = "[O]",
@@ -32,6 +29,7 @@ return {
   GitUnstaged = "[U]",
   GitUntracked = "[?]",
   MacroRecording = "Recording:",
+  NeovimClose = "X", -- TODO v3: remove this icon
   Paste = "[PASTE]",
   Search = "?",
   Selected = "*",

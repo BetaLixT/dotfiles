@@ -1,10 +1,7 @@
 vim.opt.shortmess:append { s = true, I = true } -- disable startup message
-vim.opt.backspace:append { "nostop" } -- Don't stop backspace at insert
-if vim.fn.has "nvim-0.9" == 1 then -- TODO v3 REMOVE THIS CONDITIONAL
-  vim.opt.diffopt:append "linematch:60" -- enable linematch diff algorithm
-end
-local options = astronvim.user_opts("options", {
+astronvim.vim_opts(astronvim.user_plugin_opts("options", {
   opt = {
+    backspace = vim.opt.backspace + { "nostop" }, -- Don't stop backspace at insert
     clipboard = "unnamedplus", -- Connection to the system clipboard
     cmdheight = 0, -- hide command line unless needed
     completeopt = { "menuone", "noselect" }, -- Options for insert mode completion
@@ -13,10 +10,6 @@ local options = astronvim.user_opts("options", {
     expandtab = true, -- Enable the use of space in tab
     fileencoding = "utf-8", -- File content encoding for the buffer
     fillchars = { eob = " " }, -- Disable `~` on nonexistent lines
-    foldenable = true, -- enable fold for nvim-ufo
-    foldlevel = 99, -- set high foldlevel for nvim-ufo
-    foldlevelstart = 99, -- start with all code unfolded
-    foldcolumn = vim.fn.has "nvim-0.9" == 1 and "1" or nil, -- show foldcolumn in nvim 0.9
     history = 100, -- Number of commands to remember in a history table
     ignorecase = true, -- Case insensitive searching
     laststatus = 3, -- globalstatus
@@ -33,12 +26,10 @@ local options = astronvim.user_opts("options", {
     signcolumn = "yes", -- Always show the sign column
     smartcase = true, -- Case sensitivie searching
     splitbelow = true, -- Splitting a new window below the current one
-    -- TODO v3 REMOVE THIS CONDITIONAL
-    splitkeep = vim.fn.has "nvim-0.9" == 1 and "screen" or nil, -- Maintain code view when splitting
     splitright = true, -- Splitting a new window at the right of the current one
     tabstop = 2, -- Number of space in a tab
     termguicolors = true, -- Enable 24-bit RGB color in the TUI
-    timeoutlen = 500, -- Shorten key timeout length a little bit for which-key
+    timeoutlen = 300, -- Length of time to wait for a mapped sequence
     undofile = true, -- Enable persistent undo
     updatetime = 300, -- Length of time to wait before triggering the plugin
     wrap = false, -- Disable wrapping of lines longer than the width of window
@@ -47,8 +38,25 @@ local options = astronvim.user_opts("options", {
   g = {
     highlighturl_enabled = true, -- highlight URLs by default
     mapleader = " ", -- set leader key
+    zipPlugin = false, -- disable zip
+    load_black = false, -- disable black
+    loaded_2html_plugin = true, -- disable 2html
+    loaded_getscript = true, -- disable getscript
+    loaded_getscriptPlugin = true, -- disable getscript
+    loaded_gzip = true, -- disable gzip
+    loaded_logipat = true, -- disable logipat
+    loaded_matchit = true, -- disable matchit
+    loaded_netrwFileHandlers = true, -- disable netrw
+    loaded_netrwPlugin = true, -- disable netrw
+    loaded_netrwSettngs = true, -- disable netrw
+    loaded_remote_plugins = true, -- disable remote plugins
+    loaded_tar = true, -- disable tar
+    loaded_tarPlugin = true, -- disable tar
+    loaded_zip = true, -- disable zip
+    loaded_zipPlugin = true, -- disable zip
+    loaded_vimball = true, -- disable vimball
+    loaded_vimballPlugin = true, -- disable vimball
     autoformat_enabled = true, -- enable or disable auto formatting at start (lsp.formatting.format_on_save must be enabled)
-    codelens_enabled = true, -- enable or disable automatic codelens refreshing for lsp that support it
     lsp_handlers_enabled = true, -- enable or disable default vim.lsp.handlers (hover and signatureHelp)
     cmp_enabled = true, -- enable completion at start
     autopairs_enabled = true, -- enable autopairs at start
@@ -56,11 +64,9 @@ local options = astronvim.user_opts("options", {
     status_diagnostics_enabled = true, -- enable diagnostics in statusline
     icons_enabled = true, -- disable icons in the UI (disable if no nerd font is available)
     ui_notifications_enabled = true, -- disable notifications when toggling UI elements
+    heirline_bufferline = false, -- enable heirline bufferline (TODO v3: remove this option and make it default)
   },
-})
-
-for scope, table in pairs(options) do
-  for setting, value in pairs(table) do
-    vim[scope][setting] = value
-  end
-end
+  t = {
+    bufs = vim.tbl_filter(astronvim.is_valid_buffer, vim.api.nvim_list_bufs()), -- buffers in tab
+  },
+}))

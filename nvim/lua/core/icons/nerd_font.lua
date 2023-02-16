@@ -18,9 +18,6 @@ return {
   Ellipsis = "…",
   FileModified = "",
   FileReadOnly = "",
-  FoldClosed = "",
-  FoldOpened = "",
-  FoldSeparator = " ",
   FolderClosed = "",
   FolderEmpty = "",
   FolderOpen = "",
@@ -40,6 +37,7 @@ return {
   LSPLoading2 = "",
   LSPLoading3 = "",
   MacroRecording = "",
+  NeovimClose = "", -- TODO v3: remove this icon
   Paste = "",
   Search = "",
   Selected = "❯",
