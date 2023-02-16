@@ -123,6 +123,7 @@ alias vim="nvim"
 alias btw="neofetch"
 
 alias kube="kubectl"
+alias lg="lazygit"
 
 # unalias gm
 
