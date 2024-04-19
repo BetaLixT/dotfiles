@@ -136,3 +136,23 @@ export PATH=$HOME/.cargo/bin:$PATH
 export EDITOR=nvim
 
 export JAVA_HOME=/usr/bin/java
+
+export NVM_DIR="$HOME/.nvm"
+  [ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
+  [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+
+# pnpm
+export PNPM_HOME="/Users/dcruza/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
+#
+export GOPRIVATE=dev.azure.com,techunicorn.com
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+
+# Load Angular CLI autocompletion.
+source <(ng completion script)
