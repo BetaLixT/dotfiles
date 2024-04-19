@@ -94,8 +94,14 @@ local config = {
     },
     highlights = function(hl) -- or a function that returns a new table of colors to set
       local C = require "default_theme.colors"
-
-      hl.Normal = { fg = C.fg, bg = C.bg }
+    
+      hi.Normal = {bg = C.none, ctermbg = C.none}
+      hi.CursorColumn = {cterm = {}, ctermbg = C.none, ctermfg = C.none}
+      hi.CursorLine = {cterm = {}, ctermbg = C.none, ctermfg = C.none}
+      hi.CursorLineNr = {cterm = {}, ctermbg = C.none, ctermfg = C.none}
+      hi.LineNr = {}
+      hi.SignColumn = {}
+      hi.StatusLine = {}
 
       -- New approach instead of diagnostic_style
       hl.DiagnosticError.italic = true
@@ -222,6 +228,10 @@ local config = {
       ["<leader>hx"] = { "<cmd><Plug>RestNvim<cr>", desc = "run request" },
       -- quick save
       -- ["<C-s>"] = { ":w!<cr>", desc = "Save File" },  -- change description but the same command
+      ["<˙>"] = { function() require("smart-splits").resize_up() end, desc = "Resize split up" },
+      ["<∆>"] = { function() require("smart-splits").resize_down() end, desc = "Resize split down" },
+      ["<˚>"] = { function() require("smart-splits").resize_left() end, desc = "Resize split left" },
+      ["<¬>"] = { function() require("smart-splits").resize_right() end, desc = "Resize split right" },
     },
     t = {
       -- setting a mapping to false will disable it
@@ -231,59 +241,68 @@ local config = {
 
   -- Configure plugins
   plugins = {
-    init = {
-      -- You can disable default plugins as follows:
-      -- ["goolord/alpha-nvim"] = { disable = true },
-
-      -- You can also add new plugins here as well:
-      -- Add plugins, the packer syntax without the "use"
-      -- { "andweeb/presence.nvim" },
-      -- {
-      --   "ray-x/lsp_signature.nvim",
-      --   event = "BufRead",
-      --   config = function()
-      --     require("lsp_signature").setup()
-      --   end,
-      -- },
-      { "rebelot/kanagawa.nvim" },
-      { "puremourning/vimspector" }
-      -- We also support a key value style plugin definition similar to NvChad:
-      -- ["ray-x/lsp_signature.nvim"] = {
-      --   event = "BufRead",
-      --   config = function()
-      --     require("lsp_signature").setup()
-      --   end,
-      -- },
-    },
-    -- All other entries override the require("<key>").setup({...}) call for default plugins
-    ["null-ls"] = function(config) -- overrides `require("null-ls").setup(config)`
-      -- config variable is the default configuration table for the setup function call
-      -- local null_ls = require "null-ls"
-
-      -- Check supported formatters and linters
-      -- https://github.com/jose-elias-alvarez/null-ls.nvim/tree/main/lua/null-ls/builtins/formatting
-      -- https://github.com/jose-elias-alvarez/null-ls.nvim/tree/main/lua/null-ls/builtins/diagnostics
-      config.sources = {
-        -- Set a formatter
-        -- null_ls.builtins.formatting.stylua,
-        -- null_ls.builtins.formatting.prettier,
+    { "goolord/alpha-nvim", enabled = false },
+    { "puremourning/vimspector" },
+    { 
+        "rebelot/kanagawa.nvim",
+        event = "BufRead",
+        config = function()
+        require('kanagawa').setup({
+          compile = false,             -- enable compiling the colorscheme
+          undercurl = true,            -- enable undercurls
+          commentStyle = { italic = true },
+          functionStyle = {},
+          keywordStyle = { italic = true},
+          statementStyle = { bold = true },
+          typeStyle = {},
+          transparent = true,         -- do not set background color
+          dimInactive = false,         -- dim inactive window `:h hl-NormalNC`
+          terminalColors = true,       -- define vim.g.terminal_color_{0,17}
+          colors = {                   -- add/modify theme and palette colors
+              palette = {},
+              theme = { wave = {}, lotus = {}, dragon = {}, all = {} },
+          },
+          overrides = function(colors) -- add/modify highlights
+              return {}
+          end,
+          theme = "wave",              -- Load "wave" theme when 'background' option is not set
+          background = {               -- map the value of 'background' option to a theme
+              dark = "wave",           -- try "dragon" !
+              light = "lotus"
+          },
+        })
+        require("kanagawa").load("wave")
+        end,
       }
-      return config -- return final config table
-    end,
-    treesitter = { -- overrides `require("treesitter").setup(...)`
-      -- ensure_installed = { "lua" },
-    },
+    -- All other entries override the require("<key>").setup({...}) call for default plugins
+    -- ["null-ls"] = function(config) -- overrides `require("null-ls").setup(config)`
+    --   -- config variable is the default configuration table for the setup function call
+    --   -- local null_ls = require "null-ls"
+    --
+    --   -- Check supported formatters and linters
+    --   -- https://github.com/jose-elias-alvarez/null-ls.nvim/tree/main/lua/null-ls/builtins/formatting
+    --   -- https://github.com/jose-elias-alvarez/null-ls.nvim/tree/main/lua/null-ls/builtins/diagnostics
+    --   config.sources = {
+    --     -- Set a formatter
+    --     -- null_ls.builtins.formatting.stylua,
+    --     -- null_ls.builtins.formatting.prettier,
+    --   }
+    --   return config -- return final config table
+    -- end,
+    -- treesitter = { -- overrides `require("treesitter").setup(...)`
+    --   -- ensure_installed = { "lua" },
+    -- },
     -- use mason-lspconfig to configure LSP installations
-    ["mason-lspconfig"] = { -- overrides `require("mason-lspconfig").setup(...)`
-      -- ensure_installed = { "sumneko_lua" },
-    },
+    -- ["mason-lspconfig"] = { -- overrides `require("mason-lspconfig").setup(...)`
+    --   -- ensure_installed = { "sumneko_lua" },
+    -- },
     -- use mason-null-ls to configure Formatters/Linter installation for null-ls sources
-    ["mason-null-ls"] = { -- overrides `require("mason-null-ls").setup(...)`
-      -- ensure_installed = { "prettier", "stylua" },
-    },
-    ["mason-nvim-dap"] = { -- overrides `require("mason-nvim-dap").setup(...)`
-      -- ensure_installed = { "python" },
-    },
+    -- ["mason-null-ls"] = { -- overrides `require("mason-null-ls").setup(...)`
+    --   -- ensure_installed = { "prettier", "stylua" },
+    -- },
+    -- ["mason-nvim-dap"] = { -- overrides `require("mason-nvim-dap").setup(...)`
+    --   -- ensure_installed = { "python" },
+    -- },
   },
 
   -- LuaSnip Options
