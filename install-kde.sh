@@ -64,3 +64,11 @@ ln -sfn $DIR/systemd $HOME/.config
 remove_non_dirlink $HOME/.config/alacritty
 ln -sfn $DIR/alacritty $HOME/.config
 
+# rofi
+remove_non_dirlink $HOME/.config/rofi
+ln -sfn $DIR/rofi $HOME/.config
+
+
+# Xdefaults
+remove_non_dirlink $HOME/.Xdefaults
+ln -s $DIR/.Xdefaults $HOME/.Xdefaults

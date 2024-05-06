@@ -102,22 +102,22 @@ local handlers = {
 --     virtual_text = false,
 -- })
 
--- DIAGNOSTICS SIGNS
-local signs = { Error = ' ', Warn = ' ', Hint = '󰌶 ', Info = ' ' }
-for type, icon in pairs(signs) do
-    local hl = 'DiagnosticSign' .. type
-    vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-end
-
-vim.diagnostic.config({
-    virtual_text = {
-        prefix = '', -- Could be '●', '▎', │, 'x', '■', , 
-    },
-    float = { border = border },
-    -- virtual_text = false,
-    -- signs = true,
-    -- underline = true,
-})
+vim.fn.sign_define(
+	"DiagnosticSignError",
+	{text = " ", texthl = "DiagnosticSignError"}
+)
+vim.fn.sign_define(
+	"DiagnosticSignWarn",
+	{text = " ", texthl = "DiagnosticSignWarn"}
+)
+vim.fn.sign_define(
+	"DiagnosticSignInfo",
+	{text = " ", texthl = "DiagnosticSignInfo"}
+)
+vim.fn.sign_define(
+	"DiagnosticSignHint",
+	{text = "󰌵", texthl = "DiagnosticSignHint"}
+)
 
 --  ╭──────────────────────────────────────────────────────────╮
 --  │                         SERVERS                          │
@@ -148,4 +148,37 @@ require'lspconfig'.omnisharp.setup{
 	cmd = { "omnisharp" },
 	settings = {
 	},
+}
+
+
+local ok, mason_registry = pcall(require, 'mason-registry')
+if not ok then
+    vim.notify 'mason-registry could not be loaded'
+    return
+end
+
+local angularls_path = mason_registry.get_package('angular-language-server'):get_install_path()
+
+require'lspconfig'.angularls.setup{
+	on_attach = on_attach,
+	cmd = {
+    'ngserver',
+    '--stdio',
+    '--tsProbeLocations',
+    table.concat({
+        angularls_path,
+        vim.uv.cwd(),
+    }, ','),
+    '--ngProbeLocations',
+    table.concat({
+        angularls_path .. '/node_modules/@angular/language-server',
+        vim.uv.cwd(),
+    }, ','),
+	},
+	settings = {
+	},
+}
+
+require'lspconfig'.tsserver.setup{
+	on_attach = on_attach,
 }

@@ -2,10 +2,10 @@ font:
   normal:
     family: SFMono Nerd Font
     style: Regular
-  size: 15.0
+  size: 13.0
 window:
   opacity: 0.93
-  decorations: buttonless
+  decorations: None
   padding:
     x: 2
   dynamic_padding: false
@@ -41,4 +41,3 @@ colors:
   indexed_colors:
     - { index: 16, color: "0xffa066" }
     - { index: 17, color: "0xff5d62" }
-alt_send_esc: false

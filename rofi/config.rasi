@@ -1,0 +1,192 @@
+configuration {
+  modes: [ combi ];
+  combi-modes: [ window, drun, run ];
+}
+
+
+* {
+    font:   "FiraCode Nerd Font Medium 12";
+
+    bg0:     #1F1F28;
+    bg1:     #2A2A37;
+    fg0:     #C8C093;
+
+		lightbg: #2A2A37;
+		lbg:     #2A2A37;
+		lfg:     #54546D;
+
+    accent-color:     #957FB8;
+    urgent-color:     #C34043;
+
+    background-color:   transparent;
+    text-color:         @fg0;
+
+    margin:     0;
+    padding:    0;
+    spacing:    0;
+		border-color: @fg0;
+		normal-foreground: @fg0;
+		separatorcolor: #363646;
+
+		alternate-active-foreground: #DCD7BA;
+		alternate-urgent-background: #2A2A37;
+		selected-active-background: @bg0;
+		active-foreground: #DCD7BA;
+
+		selected-urgent-foreground: @bg0;
+		alternate-normal-foreground: @fg0;
+		selected-active-foreground: @bg0;
+		active-background: @bg0;
+		normal-background: @bg0;
+		urgent-background: @bg0;
+		alternate-active-background: @lbg;
+		selected-normal-background:  var(lfg);
+}
+
+window {
+    location:   center;
+    width:      480;
+
+    background-color:   @bg0;
+}
+
+message {
+    padding:      1px ;
+    border-color: var(fg0);
+    border:       2px dash 0px 0px ;
+}
+
+num-filtered-rows {
+    expand:     false;
+    text-color: @lfg;
+}
+num-rows {
+    expand:     false;
+    text-color: @lfg;
+}
+textbox-num-sep {
+    expand:     false;
+    str:        "/";
+    text-color: @lfg;
+}
+
+inputbar {
+    spacing:    8px; 
+    padding:    8px;
+		text-color:       var(fg0);
+    background-color:   @bg0;	
+}
+
+case-indicator {
+    spacing:    0;
+    text-color: var(fg0);
+}
+
+entry {
+ placeholder-color: @lfg;
+ text-color: @fg0;
+}
+
+prompt, entry, element-icon, element-text {
+    vertical-align: 0.5;
+}
+
+prompt {
+    text-color: @accent-color;
+}
+
+textbox {
+    padding:            8px;
+}
+
+listview {
+    padding:    4px 0;
+    lines:      8;
+    columns:    1;
+
+    fixed-height:   false;
+}
+
+element {
+    padding: 8px ;
+    cursor:  pointer;
+    spacing: 8px ;
+    border:  0;
+}
+
+element normal normal {
+    text-color: @fg0;
+		background-color: @bg0;	
+}
+
+element normal urgent {
+    background-color: @bg0;
+    text-color: @urgent-color;
+}
+
+element normal active {
+    text-color: @accent-color;
+		background-color:   @bg0;	
+}
+
+element selected {
+    text-color: @bg0;
+}
+
+element selected.normal {
+    background-color: @accent-color;
+    text-color: @bg0;
+}
+element selected.urgent {
+    background-color: @urgent-color;
+    text-color: @bg0;
+}
+element selected.active {
+    background-color: @accent-color;
+    text-color: @bg0;
+}
+
+element alternate.normal {
+    text-color: @fg0;
+		background-color: @bg0;
+}
+element alternate.urgent {
+    background-color: @bg0;
+    text-color: @urgent-color;
+}
+element alternate.active {
+    text-color: @accent-color;
+		background-color:   @bg0;	
+}
+
+element selected normal, element selected active {
+    background-color:   @accent-color;
+}
+
+element selected urgent {
+    background-color:   @urgent-color;
+}
+
+element-icon {
+    size:   0.8em;
+}
+
+window {
+    padding:          5;
+    background-color: var(bg0);
+    location:         center;
+    width:            480;
+    border:           0;
+}
+
+scrollbar {
+    width:        4px ;
+    padding:      0;
+    handle-width: 8px ;
+    border:       0;
+    handle-color: @fg0;
+}
+sidebar {
+    border-color: @fg0;
+    border:       2px dash 0px 0px ;
+}

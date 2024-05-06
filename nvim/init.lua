@@ -7,23 +7,6 @@ vim.cmd("set clipboard=unnamedplus")
 vim.cmd("set shiftwidth=2")
 vim.cmd("set tabstop=2")
 
-vim.fn.sign_define(
-	"DiagnosticSignError",
-	{text = " ", texthl = "DiagnosticSignError"}
-)
-vim.fn.sign_define(
-	"DiagnosticSignWarn",
-	{text = " ", texthl = "DiagnosticSignWarn"}
-)
-vim.fn.sign_define(
-	"DiagnosticSignInfo",
-	{text = " ", texthl = "DiagnosticSignInfo"}
-)
-vim.fn.sign_define(
-	"DiagnosticSignHint",
-	{text = "󰌵", texthl = "DiagnosticSignHint"}
-)
-
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
@@ -38,10 +21,10 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-
 require("lazy").setup({
 	{"rebelot/kanagawa.nvim"},
-	{"nvim-treesitter/nvim-treesitter"},
+	{"nvim-treesitter/nvim-treesitter", build = ":TSUpdate"},
+	{"mbbill/undotree"},
 	{"nvim-lua/lsp-status.nvim"},
   {"nvim-tree/nvim-web-devicons"},
 	{'akinsho/bufferline.nvim', version = "*", dependencies = 'nvim-tree/nvim-web-devicons'},
@@ -82,68 +65,38 @@ require("lazy").setup({
 		dependencies = { 'nvim-lua/plenary.nvim' }
 	},
 	{ 'mrjones2014/smart-splits.nvim' },
-	{
-        'neovim/nvim-lspconfig',
-        event = { 'BufReadPre', 'BufReadPost', 'BufNewFile' },
-        dependencies = {
-            { 'folke/neodev.nvim', opts = {} },
-        }
-  },
-	{
-        'williamboman/mason.nvim',
-        build = ':MasonUpdate',
-        cmd = 'Mason'
-  },
-	{ "williamboman/mason-lspconfig.nvim" },
-	{
-		'hrsh7th/nvim-cmp',
-		event = 'InsertEnter',
-		dependencies = {
-				'hrsh7th/cmp-cmdline',
-				'hrsh7th/cmp-nvim-lsp',
-				'hrsh7th/cmp-buffer',
-				'saadparwaiz1/cmp_luasnip',
-				'ray-x/cmp-treesitter',
-				'hrsh7th/cmp-nvim-lsp-signature-help',
-				'hrsh7th/cmp-nvim-lua',
-				'f3fora/cmp-spell',
-				'hrsh7th/cmp-path',
-				'fazibear/cmp-nerdfonts',
-				'octaltree/cmp-look',
-		}
-  },	
-	{
-    "jose-elias-alvarez/null-ls.nvim",
-    dependencies = {
-      {
-        "jay-babu/mason-null-ls.nvim",
-        cmd = { "NullLsInstall", "NullLsUninstall" },
-        opts = { handlers = {} },
-      },
-    },
-  },
- --[[ 
-	{ 'Sirver/ultisnips', event = { 'InsertEnter' } },	
-	{
-		"rebelot/heirline.nvim",
-		config = function()
-		require("heirline").setup({})
-		end
-	},
-	
-	]]--
+	require("lazy/lsp"),
 })
 
-vim.cmd("colorscheme kanagawa")
+require'nvim-treesitter.configs'.setup {
+  -- A list of parser names, or "all" (the five listed parsers should always be installed)
+  ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "javascript", "typescript", "go" },
+
+  -- Install parsers synchronously (only applied to `ensure_installed`)
+  sync_install = false,
+
+  -- Automatically install missing parsers when entering buffer
+  -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
+  auto_install = true,
+
+  highlight = {
+    enable = true,
+    -- Or use a function for more flexibility, e.g. to disable slow treesitter highlight for large files
+
+    -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+    -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+    -- Using this option may slow down your editor, and you may see some duplicate highlights.
+    -- Instead of true it can also be a list of languages
+    additional_vim_regex_highlighting = false,
+  },
+}
+
 vim.opt.termguicolors = true
 require("bufferline").setup{}
 require("plugins/smartsplits")
 require("plugins/toggleterm")
 require("utils/lazygit")
 require("plugins/telescope")
-require("plugins/mason")
-require("plugins/mason-lspconfig")
-require("plugins/lspconfig")
 --[[
 
 
