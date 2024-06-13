@@ -65,6 +65,8 @@ require("lazy").setup({
 		dependencies = { 'nvim-lua/plenary.nvim' }
 	},
 	{ 'mrjones2014/smart-splits.nvim' },
+	require("lazy/copilot"),
+	require("lazy/cocmp"),
 	require("lazy/lsp"),
 })
 

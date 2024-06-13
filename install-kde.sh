@@ -72,3 +72,11 @@ ln -sfn $DIR/rofi $HOME/.config
 # Xdefaults
 remove_non_dirlink $HOME/.Xdefaults
 ln -s $DIR/.Xdefaults $HOME/.Xdefaults
+
+# dunst
+remove_non_dirlink $HOME/.config/dunst
+ln -sfn $DIR/dunst $HOME/.config
+
+# scripts
+remove_non_dirlink $HOME/.config/scripts
+ln -sfn $DIR/scripts $HOME/.config

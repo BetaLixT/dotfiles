@@ -110,7 +110,7 @@ set $ws10_key 0
 bindsym $mod+Return exec /usr/bin/alacritty
 
 ## Launch // Application // <> Space ##
-bindsym $mod+space exec rofi -show combi
+bindsym $mod+space exec rofi -show drun
 
 ## Launch // Command // <><Shift> Space ##
 bindsym $mod+Shift+space exec rofi -show filebrowser
@@ -121,13 +121,15 @@ bindsym $mod+Ctrl+space exec rofi -show window
 ## Launch // File Search // <><Alt> Space ##
 bindsym $mod+Mod1+space exec rofi -show find -modi find:/usr/share/rofi/modi/finder.sh -theme $(xrescat rofi.theme)
 
+bindsym $mod+a exec rofi -show rofi-sound -modi "rofi-sound:~/.config/scripts/rofi-audio.sh"
+
 ###############################################################################
 # Window and Workspace Navigation
 ###############################################################################
 
 ## Navigate // Relative Parent // <> a ##/
-set $i3-wm.binding.focus_parent a
-bindsym $mod+$i3-wm.binding.focus_parent focus parent
+# set $i3-wm.binding.focus_parent a
+# bindsym $mod+$i3-wm.binding.focus_parent focus parent
 
 ## Navigate // Relative Child // <> z ##/
 set $i3-wm.binding.focus_child z

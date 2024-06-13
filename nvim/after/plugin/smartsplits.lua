@@ -1,5 +1,7 @@
 -- Better window navigation
 
+vim.cmd("set splitbelow")
+vim.cmd("set splitright")
 vim.keymap.set('n', "-", vim.cmd.split)
 vim.keymap.set('n', "_", vim.cmd.vsplit)
 vim.keymap.set('n', "<C-h>", function() require("smart-splits").move_cursor_left() end, {silent = true })
