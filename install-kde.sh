@@ -62,7 +62,7 @@ ln -sfn $DIR/systemd $HOME/.config
 
 # alacritty
 remove_non_dirlink $HOME/.config/alacritty
-ln -sfn $DIR/alacritty $HOME/.config
+ln -sfn $DIR/alacritty-lnx $HOME/.config/alacritty
 
 # rofi
 remove_non_dirlink $HOME/.config/rofi
