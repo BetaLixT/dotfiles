@@ -65,7 +65,7 @@ require("lazy").setup({
 		dependencies = { 'nvim-lua/plenary.nvim' }
 	},
 	{ 'mrjones2014/smart-splits.nvim' },
-	{ dir = "/Users/dcruza/Projects/personal/selmod" },
+	-- { dir = "/Users/dcruza/Projects/personal/selmod" },
 	-- require("lazy/copilot"),
 	require("lazy/cocmp"),
 	require("lazy/lsp"),
@@ -97,18 +97,19 @@ require'nvim-treesitter.configs'.setup {
   },
 }
 
-require("selmod").setup({
-	debug = true,
-})
+-- require("selmod").setup({debug = true})
 
 vim.opt.termguicolors = true
 require("bufferline").setup{}
 require("plugins/smartsplits")
 require("plugins/toggleterm")
+
+local builtin = require('telescope.builtin')
+
 require("utils/lazygit")
 require("plugins/telescope")
 --[[
-
+ 
 
 require("plugins/heirline")
 
