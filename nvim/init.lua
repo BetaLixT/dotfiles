@@ -65,7 +65,8 @@ require("lazy").setup({
 		dependencies = { 'nvim-lua/plenary.nvim' }
 	},
 	{ 'mrjones2014/smart-splits.nvim' },
-	require("lazy/copilot"),
+	{ dir = "/Users/dcruza/Projects/personal/selmod" },
+	-- require("lazy/copilot"),
 	require("lazy/cocmp"),
 	require("lazy/lsp"),
 })
@@ -95,6 +96,10 @@ require'nvim-treesitter.configs'.setup {
     end,
   },
 }
+
+require("selmod").setup({
+	debug = true,
+})
 
 vim.opt.termguicolors = true
 require("bufferline").setup{}
