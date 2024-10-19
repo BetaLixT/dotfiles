@@ -46,7 +46,7 @@ ln -sfn $DIR/wallpapers $HOME/.config
 
 # ZSH config
 remove_non_dirlink $HOME/.zshrc
-ln -s $DIR/.zshrc $HOME/.zshrc
+ln -s $DIR/.zshrc-lnx $HOME/.zshrc
 
 # tmux config
 remove_non_dirlink $HOME/.tmux.conf
