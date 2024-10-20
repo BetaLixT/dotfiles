@@ -80,3 +80,7 @@ ln -sfn $DIR/dunst $HOME/.config
 # scripts
 remove_non_dirlink $HOME/.config/scripts
 ln -sfn $DIR/scripts $HOME/.config
+
+# hypr
+remove_non_dirlink $HOME/.config/hypr
+ln -sfn $DIR/hypr $HOME/.config
