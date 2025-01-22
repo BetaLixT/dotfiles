@@ -17,6 +17,10 @@ mkdir -p $HOME/.config
 remove_non_dirlink $HOME/.config/nvim
 ln -sfn $DIR/nvim $HOME/.config
 
+# zed
+remove_non_dirlink $HOME/.config/zed
+ln -sfn $DIR/zed $HOME/.config
+
 # wallpapers
 remove_non_dirlink $HOME/.config/wallpapers
 ln -sfn $DIR/wallpapers $HOME/.config
