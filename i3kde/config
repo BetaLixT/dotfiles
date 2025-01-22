@@ -52,6 +52,9 @@ for_window [class="plasmashell" window_type="notification"] border none, move po
 no_focus [class="plasmashell" window_type="notification"]
 for_window [title="Desktop — Plasma"] kill; floating enable; border none
 
+# Gnome compatibility
+exec --no-starup-id /usr/lib/gsd-xsettings
+
 ###############################################################################
 # Key Mappings
 ###############################################################################
@@ -122,6 +125,8 @@ bindsym $mod+Ctrl+space exec rofi -show window
 bindsym $mod+Mod1+space exec rofi -show find -modi find:/usr/share/rofi/modi/finder.sh -theme $(xrescat rofi.theme)
 
 bindsym $mod+a exec rofi -show rofi-sound -modi "rofi-sound:~/.config/scripts/rofi-audio.sh"
+
+bindsym $mod+d exec rofi -show rofi-display -modi "rofi-display:~/.config/scripts/rofi-display.sh"
 
 ###############################################################################
 # Window and Workspace Navigation
@@ -372,7 +377,12 @@ set $i3-wm.binding.restart Ctrl+r
 bindsym $mod+$i3-wm.binding.restart restart
 
 ## Session // Logout // <><Shift> e ##
-bindsym $mod+Shift+e exec --no-startup-id qdbus-qt5 org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout -1 -1 -1
+# bindsym $mod+Shift+e exec --no-startup-id qdbus-qt5 org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout -1 -1 -1
+bindsym $mod+Shift+e exit
+
+
+
+
 # set $i3-wm.binding.logout Shift+e
 # set $i3-wm.program.logout /usr/bin/gnome-session-quit --logout
 # bindsym $mod+$i3-wm.binding.logout exec $i3-wm.program.logout
@@ -393,7 +403,7 @@ bindsym $mod+Shift+e exec --no-startup-id qdbus-qt5 org.kde.ksmserver /KSMServer
 # bindsym $mod+$i3-wm.binding.lock exec $i3-wm.program.lock
 
 ## Session // Sleep // <><Shift> s ##
-set $i3-wm.binding.sleep Shift+s
+# set $i3-wm.binding.sleep Shift+s
 set $i3-wm.program.sleep systemctl suspend
 bindsym $mod+$i3-wm.binding.sleep exec $i3-wm.program.sleep
 
@@ -514,20 +524,20 @@ focus_follows_mouse $i3-wm.gaps.focus_follows_mouse
 
 # Create variables from Xresources for i3's look.
 set $focused.color.border "#16161D"
-set $focused.color.background "#586e75"
+set $focused.color.background "#16161D"
 set $focused.color.text "#DCD7BA"
 set $focused.color.indicator "#268bd2"
 set $focused.color.child_border "#e6c384"
 
 set $focused_inactive.color.border "#16161D"
-set $focused_inactive.color.background "#1F1F28"
-set $focused_inactive.color.text "#839496"
+set $focused_inactive.color.background "#16161D"
+set $focused_inactive.color.text "#C8C093"
 set $focused_inactive.color.indicator "#1F1F28"
 set $focused_inactive.color.child_border "#16161D"
 
-set $unfocused.color.border "#16161D"
+set $unfocused.color.border "#1F1F28"
 set $unfocused.color.background "#1F1F28"
-set $unfocused.color.text "#839496"
+set $unfocused.color.text "#938AA9"
 set $unfocused.color.indicator "#1F1F28"
 set $unfocused.color.child_border "#16161D"
 
@@ -544,6 +554,7 @@ client.focused          $focused.color.border              $focused.color.backgr
 client.focused_inactive $focused_inactive.color.border     $focused_inactive.color.background $focused_inactive.color.text       $focused_inactive.color.indicator  $focused_inactive.color.child_border
 client.unfocused        $unfocused.color.border            $unfocused.color.background        $unfocused.color.text              $unfocused.color.indicator         $unfocused.color.child_border
 client.urgent           $urgent.color.border               $urgent.color.background           $urgent.color.text                 $urgent.color.indicator            $urgent.color.child_border
+
 
 # Create variables from Xresources for i3bars's look.
 set $i3-wm.bar.background.color "#1F1F28"
@@ -653,8 +664,8 @@ bindsym Ctrl+Shift+Print exec --no-startup-id maim --select "/home/$USER/Picture
 
 ## Clipboard Screenshots
 bindsym Print exec --no-startup-id maim | wl-copy -selection clipboard -t image/png
-bindsym $mod+Print exec --no-startup-id maim --window $(xdotool getactivewindow) | wl-copy -selection clipboard -t image/png
-bindsym Shift+Print exec --no-startup-id maim --select | wl-copy -selection clipboard -t image/png
+bindsym $mod+s exec --no-startup-id maim --window $(xdotool getactivewindow) | wl-copy -selection clipboard -t image/png
+bindsym $mod+Shift+s exec --no-startup-id maim --select | xclip -selection clipboard -t image/png
 
 # window border
 for_window [class=.*] border pixel 2
@@ -668,3 +679,4 @@ bindsym $mod+Ctrl+less move workspace to output left
 
 # wallpaper
 exec --no-startup-id feh --bg-fill $HOME/.config/wallpapers/shop.png
+exec --no-startup-id exec ~/.config/scripts/startup-apps.sh
