@@ -19,26 +19,34 @@
       "shift-l": "pane::ActivateNextItem",
       "-": "pane::SplitDown",
       "_": "pane::SplitRight",
+      "space o": "pane::RevealInProjectPanel",
+      "g i": "editor::GoToImplementation",
+      "g r": "editor::FindAllReferences"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == normal || ProjectPanel",
+    "bindings": {
       "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
       "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
       "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
       "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"],
       "alt-h": "vim::ResizePane",
       "space e": "workspace::ToggleLeftDock",
-      "space o": "workspace::ToggleLeftDock",
-      "g i": "editor::GoToImplementation",
       "space t": "workspace::ToggleBottomDock",
       "space g": "git_panel::ToggleFocus",
-      "space f f": "file_finder::Toggle"
+      "space f f": "file_finder::Toggle",
+      "space f w": "workspace::NewSearch"
     }
   },
   {
-    "context": "ProjectPanel",
+    "context": "ProjectPanel && not_editing",
     "bindings": {
-      "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
-      "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
-      "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
-      "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"]
+      "a": "project_panel::NewFile",
+      "r": "project_panel::Rename",
+      "y": "project_panel::Copy",
+      "p": "project_panel::Paste",
+      "d": "project_panel::Delete"
     }
   },
   {
