@@ -156,3 +156,6 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Load Angular CLI autocompletion.
 source <(ng completion script)
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/dcruza/.lmstudio/bin"

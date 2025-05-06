@@ -21,20 +21,26 @@
       "_": "pane::SplitRight",
       "space o": "pane::RevealInProjectPanel",
       "g i": "editor::GoToImplementation",
-      "g r": "editor::FindAllReferences"
+      "g r": "editor::FindAllReferences",
+      "g r n": "editor::Rename"
     }
   },
   {
-    "context": "Editor && vim_mode == normal || ProjectPanel",
+    "context": "Editor && vim_mode == normal || ProjectPanel || GitPanel",
     "bindings": {
       "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
       "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
       "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
       "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"],
-      "alt-h": "vim::ResizePane",
+      "alt-h": "vim::ResizePaneLeft",
+      "alt-l": "vim::ResizePaneRight",
+      "alt-k": "vim::ResizePaneUp",
+      "alt-j": "vim::ResizePaneDown",
       "space e": "workspace::ToggleLeftDock",
       "space t": "workspace::ToggleBottomDock",
-      "space g": "git_panel::ToggleFocus",
+      "space g g": "git_panel::ToggleFocus",
+      "space g c": "git::Commit",
+      "space g p": "git::Push",
       "space f f": "file_finder::Toggle",
       "space f w": "workspace::NewSearch"
     }
@@ -45,6 +51,16 @@
       "a": "project_panel::NewFile",
       "r": "project_panel::Rename",
       "y": "project_panel::Copy",
+      "p": "project_panel::Paste",
+      "d": "project_panel::Delete"
+    }
+  },
+  {
+    "context": "GitPanel",
+    "bindings": {
+      "a": "git::Add",
+      "m": "git_panel::GenerateCommitMessage",
+      "c": "git::Commit",
       "p": "project_panel::Paste",
       "d": "project_panel::Delete"
     }
