@@ -12,7 +12,7 @@
   "buffer_font_size": 16,
   "theme": {
     "mode": "system",
-    "light": "Kanagawa",
+    "light": "Gruvbox Dark Hard",
     "dark": "One Dark"
   },
   "tab_bar": {
