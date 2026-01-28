@@ -22,7 +22,9 @@
       "space o": "pane::RevealInProjectPanel",
       "g i": "editor::GoToImplementation",
       "g r": "editor::FindAllReferences",
-      "g r n": "editor::Rename"
+      "g r n": "editor::Rename",
+      "] d": "editor::GoToDiagnostic",
+      "[ d": "editor::GoToPreviousDiagnostic"
     }
   },
   {

@@ -20,7 +20,7 @@ end
 -- local opts = { noremap = true, silent = true }
 
 -- LSPATTACH AUTOCOMMAND
-local on_attach = function(_, bufnr)
+local on_attach = function(client, bufnr)
 	-- group = vim.api.nvim_create_augroup('UserLspConfig', {}),
 	-- callback = function(ev)
 	-- Enable completion triggered by <c-x><c-o>
@@ -67,11 +67,8 @@ local on_attach = function(_, bufnr)
 )
 
 	-- Inlay Hints
-	local client = vim.lsp.get_client_by_id(ev.data.client_id)
 	if client.server_capabilities.inlayHintProvider then
-			vim.lsp.inlay_hint.enable(ev.buf, true)
-	else
-			vim.lsp.inlay_hint.enable(ev.buf, false)
+			vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
 	end
 end
 

@@ -22,7 +22,31 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-	{"rebelot/kanagawa.nvim"},
+	{
+		"greggh/claude-code.nvim",
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+		},
+		config = function()
+			require("claude-code").setup({
+				window = {
+					position = "vertical",
+					split_ratio = 0.3,
+				},
+				keymaps = {
+					toggle = {
+						normal = "<leader>ac",
+						terminal = "<leader>ac",
+					},
+				},
+			})
+		end,
+	},
+	{
+		"rebelot/kanagawa.nvim",
+		lazy = false,
+		priority = 1000,
+	},
 	{"nvim-treesitter/nvim-treesitter", build = ":TSUpdate"},
 	{"mbbill/undotree"},
 	{"nvim-lua/lsp-status.nvim"},
@@ -99,7 +123,9 @@ require'nvim-treesitter.configs'.setup {
 
 -- require("selmod").setup({debug = true})
 
+
 vim.opt.termguicolors = true
+require("bufferline").setup{}
 require("bufferline").setup{}
 require("plugins/smartsplits")
 require("plugins/toggleterm")
@@ -109,7 +135,7 @@ local builtin = require('telescope.builtin')
 require("utils/lazygit")
 require("plugins/telescope")
 --[[
- 
+
 
 require("plugins/heirline")
 

@@ -15,7 +15,7 @@ return {
 	},
 
 	config = function()
-		local on_attach = function(_, bufnr)
+		local on_attach = function(client, bufnr)
 			local function buf_set_option(...)
 				vim.api.nvim_buf_set_option(bufnr, ...)
 			end
@@ -52,11 +52,10 @@ return {
 			vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, opts)
 
 			-- Inlay Hints
-			local client = vim.lsp.get_client_by_id(ev.data.client_id)
 			if client.server_capabilities.inlayHintProvider then
-				vim.lsp.inlay_hint.enable(ev.buf, true)
+				vim.lsp.inlay_hint.enable(true, {bufnr = bufnr})
 			else
-				vim.lsp.inlay_hint.enable(ev.buf, false)
+				vim.lsp.inlay_hint.enable(false, {bufnr = bufnr})
 			end
 		end
 
