@@ -34,3 +34,10 @@ vim.api.nvim_create_autocmd('TermLeave', {
         vim.opt_local.timeoutlen = 1000
     end,
 })
+
+-- Ensure Esc-Esc works in all terminals (including claude-code)
+vim.api.nvim_create_autocmd('TermOpen', {
+    callback = function()
+        vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { buffer = true, desc = 'Exit terminal mode' })
+    end,
+})
