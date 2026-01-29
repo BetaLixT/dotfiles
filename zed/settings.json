@@ -7,6 +7,13 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "assistant": {
+    "default_model": {
+      "provider": "anthropic",
+      "model": "claude-3-7-sonnet-latest"
+    },
+    "version": "2"
+  },
   "ssh_connections": [
     {
       "host": "contour",
@@ -24,7 +31,7 @@
   "buffer_font_size": 16,
   "theme": {
     "mode": "system",
-    "light": "Kanagawa",
+    "light": "Gruvbox Dark Hard",
     "dark": "One Dark"
   },
   "tab_bar": {

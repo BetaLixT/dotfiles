@@ -1,5 +1,11 @@
 require("utils/mappings")
 
+-- Disable netrw (use neo-tree instead)
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
+vim.opt.exrc = true
+
 vim.wo.relativenumber = true
 vim.cmd("set nu rnu")
 vim.cmd("set nowrap")
@@ -10,97 +16,163 @@ vim.cmd("set tabstop=2")
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable", -- latest stable release
-    lazypath,
-  })
+    vim.fn.system({
+        "git",
+        "clone",
+        "--filter=blob:none",
+        "https://github.com/folke/lazy.nvim.git",
+        "--branch=stable", -- latest stable release
+        lazypath,
+    })
 end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-	{"rebelot/kanagawa.nvim"},
-	{"nvim-treesitter/nvim-treesitter", build = ":TSUpdate"},
-	{"mbbill/undotree"},
-	{"nvim-lua/lsp-status.nvim"},
-  {"nvim-tree/nvim-web-devicons"},
-	{'akinsho/bufferline.nvim', version = "*", dependencies = 'nvim-tree/nvim-web-devicons'},
-	{
-    "nvim-neo-tree/neo-tree.nvim",
-    branch = "v3.x",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
-      "MunifTanjim/nui.nvim",
-      "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
-      {
-        's1n7ax/nvim-window-picker',
-        version = '2.*',
+    {
+        "greggh/claude-code.nvim",
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+        },
         config = function()
-            require 'window-picker'.setup({
-                filter_rules = {
-                    include_current_win = false,
-                    autoselect_one = true,
-                    -- filter using buffer options
-                    bo = {
-                        -- if the file type is one of following, the window will be ignored
-                        filetype = { 'neo-tree', "neo-tree-popup", "notify" },
-                        -- if the buffer type is one of following, the window will be ignored
-                        buftype = { 'terminal', "quickfix" },
+            require("claude-code").setup({
+                window = {
+                    position = "vertical",
+                    split_ratio = 0.3,
+                },
+                keymaps = {
+                    toggle = {
+                        normal = "<leader>ac",
+                        terminal = "<leader>ac",
                     },
-            },
-        })
-			end,
-      },
+                },
+            })
+        end,
     },
+    {
+        "rebelot/kanagawa.nvim",
+        lazy = false,
+        priority = 1000,
+    },
+    { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
+    { "mbbill/undotree" },
+    { "nvim-lua/lsp-status.nvim" },
+    { "nvim-tree/nvim-web-devicons" },
+    { 'akinsho/bufferline.nvim',         version = "*",      dependencies = 'nvim-tree/nvim-web-devicons' },
+    {
+        "nvim-neo-tree/neo-tree.nvim",
+        branch = "v3.x",
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+            "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
+            "MunifTanjim/nui.nvim",
+            "3rd/image.nvim",              -- Optional image support in preview window: See `# Preview Mode` for more information
+            {
+                's1n7ax/nvim-window-picker',
+                version = '2.*',
+                config = function()
+                    require 'window-picker'.setup({
+                        filter_rules = {
+                            include_current_win = false,
+                            autoselect_one = true,
+                            -- filter using buffer options
+                            bo = {
+                                -- if the file type is one of following, the window will be ignored
+                                filetype = { 'neo-tree', "neo-tree-popup", "notify" },
+                                -- if the buffer type is one of following, the window will be ignored
+                                buftype = { 'terminal', "quickfix" },
+                            },
+                        },
+                    })
+                end,
+            },
+        },
 
-		config = require "plugins.neo-tree"
-  },
-	{'akinsho/toggleterm.nvim', version = "*", config = true},
-	{
-		'nvim-telescope/telescope.nvim', tag = '0.1.6',
-		dependencies = { 'nvim-lua/plenary.nvim' }
-	},
-	{ 'mrjones2014/smart-splits.nvim' },
-	-- { dir = "/Users/dcruza/Projects/personal/selmod" },
-	-- require("lazy/copilot"),
-	require("lazy/cocmp"),
-	require("lazy/lsp"),
+        config = require "plugins.neo-tree"
+    },
+    { 'akinsho/toggleterm.nvim',      version = "*", config = true },
+    {
+        'nvim-telescope/telescope.nvim',
+        tag = '0.1.6',
+        dependencies = { 'nvim-lua/plenary.nvim' }
+    },
+    { 'mrjones2014/smart-splits.nvim' },
+    {
+        'akinsho/git-conflict.nvim',
+        version = "*",
+        config = function()
+            require('git-conflict').setup({
+                default_mappings = true,     -- use default keymaps
+                default_commands = true,     -- enable commands
+                disable_diagnostics = false, -- show diagnostics during conflict
+                list_opener = 'copen',       -- quickfix for conflict list
+                highlights = {
+                    incoming = 'DiffAdd',
+                    current = 'DiffText',
+                }
+            })
+        end
+    },
+    {
+        "folke/which-key.nvim",
+        event = "VeryLazy",
+        opts = {
+            icons = {
+                mappings = false,
+            },
+        },
+        keys = {
+            {
+                "<leader>?",
+                function()
+                    require("which-key").show({ global = false })
+                end,
+                desc = "Buffer Local Keymaps (which-key)",
+            },
+        },
+    },
+    -- { dir = "/Users/dcruza/Projects/personal/selmod" },
+    -- require("lazy/copilot"),
+    require("lazy/cocmp"),
+    require("lazy/lsp"),
+    require("lazy/dap"),
 })
 
-require'nvim-treesitter.configs'.setup {
-  -- A list of parser names, or "all" (the five listed parsers should always be installed)
-  ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "javascript", "typescript", "go" },
+require 'nvim-treesitter.configs'.setup {
+    -- A list of parser names, or "all" (the five listed parsers should always be installed)
+    ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "javascript", "typescript", "go", "dockerfile", "python", "rust", "zig" },
 
-  -- Install parsers synchronously (only applied to `ensure_installed`)
-  sync_install = false,
+    -- Install parsers synchronously (only applied to `ensure_installed`)
+    sync_install = false,
 
-  -- Automatically install missing parsers when entering buffer
-  -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
-  auto_install = true,
+    -- Automatically install missing parsers when entering buffer
+    -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
+    auto_install = true,
 
-  highlight = {
-    enable = true,
-    -- Or use a function for more flexibility, e.g. to disable slow treesitter highlight for large files
+    highlight = {
+        enable = true,
+        -- Or use a function for more flexibility, e.g. to disable slow treesitter highlight for large files
 
-    -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-    -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
-    -- Using this option may slow down your editor, and you may see some duplicate highlights.
-    -- Instead of true it can also be a list of languages
-    additional_vim_regex_highlighting = false,
-		-- disable = function(lang, bufnr) -- Disable in large C++ buffers
-    --    return lang == "terraform" and vim.api.nvim_buf_line_count(bufnr) > 700
-    -- end,
-  },
+        -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
+        -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
+        -- Using this option may slow down your editor, and you may see some duplicate highlights.
+        -- Instead of true it can also be a list of languages
+        additional_vim_regex_highlighting = false,
+        -- disable = function(lang, bufnr) -- Disable in large C++ buffers
+        --    return lang == "terraform" and vim.api.nvim_buf_line_count(bufnr) > 700
+        -- end,
+    },
 }
 
 -- require("selmod").setup({debug = true})
 
+
 vim.opt.termguicolors = true
-require("bufferline").setup{}
+require("bufferline").setup({
+    options = {
+        mode = "buffers",
+        diagnostics = "nvim_lsp",
+    }
+})
 require("plugins/smartsplits")
 require("plugins/toggleterm")
 
@@ -109,8 +181,8 @@ local builtin = require('telescope.builtin')
 require("utils/lazygit")
 require("plugins/telescope")
 --[[
- 
+
 
 require("plugins/heirline")
 
-]]--
+]] --

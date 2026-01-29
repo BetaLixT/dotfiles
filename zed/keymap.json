@@ -23,7 +23,9 @@
       "g i": "editor::GoToImplementation",
       "g r": "editor::FindAllReferences",
       "g r n": "editor::Rename",
-    },
+      "] d": "editor::GoToDiagnostic",
+      "[ d": "editor::GoToPreviousDiagnostic"
+    }
   },
   {
     "context": "Editor && vim_mode == normal || ProjectPanel || GitPanel",
