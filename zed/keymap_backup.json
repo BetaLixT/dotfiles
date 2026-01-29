@@ -10,28 +10,28 @@
     "context": "Workspace",
     "bindings": {
       // "shift shift": "file_finder::Toggle"
-    },
+    }
   },
   {
     "context": "Editor && vim_mode == normal",
     "bindings": {
-      "shift-h": "pane::ActivatePreviousItem",
+      "shift-h": "pane::ActivatePrevItem",
       "shift-l": "pane::ActivateNextItem",
       "-": "pane::SplitDown",
       "_": "pane::SplitRight",
       "space o": "pane::RevealInProjectPanel",
       "g i": "editor::GoToImplementation",
       "g r": "editor::FindAllReferences",
-      "g r n": "editor::Rename",
-    },
+      "g r n": "editor::Rename"
+    }
   },
   {
     "context": "Editor && vim_mode == normal || ProjectPanel || GitPanel",
     "bindings": {
-      "ctrl-h": "workspace::ActivatePaneLeft",
-      "ctrl-l": "workspace::ActivatePaneRight",
-      "ctrl-k": "workspace::ActivatePaneUp",
-      "ctrl-j": "workspace::ActivatePaneDown",
+      "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
+      "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
+      "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
+      "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"],
       "alt-h": "vim::ResizePaneLeft",
       "alt-l": "vim::ResizePaneRight",
       "alt-k": "vim::ResizePaneUp",
@@ -42,8 +42,8 @@
       "space g c": "git::Commit",
       "space g p": "git::Push",
       "space f f": "file_finder::Toggle",
-      "space f w": "workspace::NewSearch",
-    },
+      "space f w": "workspace::NewSearch"
+    }
   },
   {
     "context": "ProjectPanel && not_editing",
@@ -52,37 +52,37 @@
       "r": "project_panel::Rename",
       "y": "project_panel::Copy",
       "p": "project_panel::Paste",
-      "d": "project_panel::Delete",
-    },
+      "d": "project_panel::Delete"
+    }
   },
-  // {
-  //   "context": "GitPanel",
-  //   "bindings": {
-  //     "a": "git::Add",
-  //     "m": "git_panel::GenerateCommitMessage",
-  //     "c": "git::Commit",
-  //     "p": "project_panel::Paste",
-  //     "d": "project_panel::Delete"
-  //   }
-  // },
+  {
+    "context": "GitPanel",
+    "bindings": {
+      "a": "git::Add",
+      "m": "git_panel::GenerateCommitMessage",
+      "c": "git::Commit",
+      "p": "project_panel::Paste",
+      "d": "project_panel::Delete"
+    }
+  },
   {
     "context": "Terminal",
     "bindings": {
-      "ctrl-a ctrl-h": "pane::ActivatePreviousItem",
+      "ctrl-a ctrl-h": "pane::ActivatePrevItem",
       "ctrl-a ctrl-l": "pane::ActivateNextItem",
-      "ctrl-h": "workspace::ActivatePaneLeft",
-      "ctrl-l": "workspace::ActivatePaneRight",
-      "ctrl-k": "workspace::ActivatePaneUp",
-      "ctrl-j": "workspace::ActivatePaneDown",
-    },
+      "ctrl-h": ["workspace::ActivatePaneInDirection", "Left"],
+      "ctrl-l": ["workspace::ActivatePaneInDirection", "Right"],
+      "ctrl-k": ["workspace::ActivatePaneInDirection", "Up"],
+      "ctrl-j": ["workspace::ActivatePaneInDirection", "Down"]
+    }
   },
   {
     "context": "Editor && (showing_code_actions || showing_completions)",
     "bindings": {
       "tab": "editor::ContextMenuNext",
-      "shift-tab": "editor::ContextMenuPrevious",
+      "shift-tab": "editor::ContextMenuPrev",
       "pageup": "editor::ContextMenuFirst",
-      "pagedown": "editor::ContextMenuLast",
-    },
-  },
+      "pagedown": "editor::ContextMenuLast"
+    }
+  }
 ]
