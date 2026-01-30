@@ -97,6 +97,22 @@ require("lazy").setup({
     },
     { 'mrjones2014/smart-splits.nvim' },
     {
+        'akinsho/git-conflict.nvim',
+        version = "*",
+        config = function()
+            require('git-conflict').setup({
+                default_mappings = true,     -- use default keymaps
+                default_commands = true,     -- enable commands
+                disable_diagnostics = false, -- show diagnostics during conflict
+                list_opener = 'copen',       -- quickfix for conflict list
+                highlights = {
+                    incoming = 'DiffAdd',
+                    current = 'DiffText',
+                }
+            })
+        end
+    },
+    {
         "folke/which-key.nvim",
         event = "VeryLazy",
         opts = {
@@ -151,8 +167,12 @@ require 'nvim-treesitter.configs'.setup {
 
 
 vim.opt.termguicolors = true
-require("bufferline").setup {}
-require("bufferline").setup {}
+require("bufferline").setup({
+    options = {
+        mode = "buffers",
+        diagnostics = "nvim_lsp",
+    }
+})
 require("plugins/smartsplits")
 require("plugins/toggleterm")
 
