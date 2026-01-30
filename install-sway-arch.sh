@@ -1,7 +1,7 @@
 #!/bin/bash
 
 remove_non_dirlink() {
-    if [[ ! (-L $1 && -d $1) && -d $1 || -f $1 ]]; then
+    if [[ -e $1 && ! -L $1 ]]; then
         echo "${1} exists, do you want to overwrite it with a symlink?"
         rm -rI $1
     fi
@@ -37,3 +37,10 @@ ln -s $DIR/.tmux.conf $HOME/.tmux.conf
 remove_non_dirlink $HOME/.config/alacritty
 ln -sfn $DIR/alacritty-lnx $HOME/.config/alacritty
 
+# sway
+remove_non_dirlink $HOME/.config/sway
+ln -sfn $DIR/sway $HOME/.config/sway
+
+# mako
+remove_non_dirlink $HOME/.config/mako
+ln -sfn $DIR/mako $HOME/.config/mako

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 remove_non_dirlink() {
-    if [[ ! (-L $1 && -d $1) && -d $1 || -f $1 ]]; then
+    if [[ -e $1 && ! -L $1 ]]; then
         echo "${1} exists, do you want to overwrite it with a symlink?"
         rm -rI $1
     fi
