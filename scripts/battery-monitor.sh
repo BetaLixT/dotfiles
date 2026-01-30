@@ -1,6 +1,6 @@
 #!/bin/bash
 
-THRESHOLD=100
+THRESHOLD=20
 CRITICAL=10
 
 

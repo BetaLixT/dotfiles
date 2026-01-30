@@ -1,0 +1,6 @@
+[Unit]
+Description=Run battery monitor script
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /home/dcruza/dotfiles/scripts/battery-monitor.sh

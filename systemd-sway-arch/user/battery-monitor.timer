@@ -1,0 +1,10 @@
+[Unit]
+Description=Run battery monitor script every minute
+
+[Timer]
+OnCalendar=*:0/1
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+

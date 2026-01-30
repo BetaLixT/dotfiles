@@ -44,3 +44,10 @@ ln -sfn $DIR/sway $HOME/.config/sway
 # mako
 remove_non_dirlink $HOME/.config/mako
 ln -sfn $DIR/mako $HOME/.config/mako
+
+# systemd
+remove_non_dirlink $HOME/.config/systemd
+ln -sfn $DIR/systemd-sway-arch $HOME/.config/systemd
+
+systemctl --user daemon-reload
+systemctl --user enable --now battery-monitor.timer

@@ -1,0 +1,4 @@
+plasma-workspace.target.wants/
+plasma-kwin_x11.service
+default.target.wants/
+timers.target.wants/
