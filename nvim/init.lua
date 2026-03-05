@@ -6,47 +6,43 @@ vim.cmd("set nowrap")
 vim.cmd("set clipboard=unnamedplus")
 vim.cmd("set shiftwidth=2")
 vim.cmd("set tabstop=2")
+vim.opt.termguicolors = true
 
 -- Keymaps
-vim.keymap.set('v', "<", "<gv", { silent = true })
-vim.keymap.set('v', ">", ">gv", { silent = true })
-vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+local map = vim.api.nvim_set_keymap
+local opts = { noremap = true, silent = true }
 
--- Bootstrap lazy.nvim
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-    vim.fn.system({
-        "git",
-        "clone",
-        "--filter=blob:none",
-        "https://github.com/folke/lazy.nvim.git",
-        "--branch=stable",
-        lazypath,
-    })
+map('v', '<', '<gv', opts)
+map('v', '>', '>gv', opts)
+map('t', '<Esc><Esc>', '<C-\\><C-n>', opts)
+
+-- File explorer (netrw)
+map('n', '<leader>e', ':Lexplore<CR>', opts)
+
+-- OSC 52 clipboard for tmux/ssh (yank only)
+local function osc52_copy(text)
+    local b64 = vim.fn.system('printf ' .. vim.fn.shellescape(text) .. ' | base64 | tr -d "\\n"')
+    local osc = '\x1b]52;c;' .. b64 .. '\x07'
+    if vim.env.TMUX then
+        osc = '\x1bPtmux;\x1b' .. osc .. '\x1b\\'
+    end
+    io.stderr:write(osc)
 end
-vim.opt.rtp:prepend(lazypath)
 
-require("lazy").setup({
-    {
-        "rebelot/kanagawa.nvim",
-        lazy = false,
-        priority = 1000,
+vim.g.clipboard = {
+    name = 'osc52',
+    copy = {
+        ['+'] = function(lines) osc52_copy(table.concat(lines, '\n')) end,
+        ['*'] = function(lines) osc52_copy(table.concat(lines, '\n')) end,
     },
-})
-
--- Colorscheme
-require('kanagawa').setup({
-    transparent = true,
-    commentStyle = { italic = true },
-    keywordStyle = { italic = true },
-    statementStyle = { bold = true },
-    terminalColors = true,
-    theme = "wave",
-    background = {
-        dark = "wave",
-        light = "lotus",
+    paste = {
+        ['+'] = function() return { vim.fn.getreg('0', 1, true), vim.fn.getregtype('0') } end,
+        ['*'] = function() return { vim.fn.getreg('0', 1, true), vim.fn.getregtype('0') } end,
     },
-})
+}
 
-vim.opt.termguicolors = true
-vim.cmd.colorscheme("kanagawa")
+-- Netrw config (built-in file explorer)
+vim.g.netrw_banner = 0
+vim.g.netrw_liststyle = 3
+vim.g.netrw_winsize = 25
+vim.g.netrw_browse_split = 0
