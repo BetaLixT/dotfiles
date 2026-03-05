@@ -1,0 +1,39 @@
+[manager]
+show_hidden = true
+sort_by = "natural"
+
+[preview]
+image_filter = "lanczos3"
+image_quality = 90
+max_width = 1920
+max_height = 1920
+
+[opener]
+edit = [
+    { run = 'nvim "$@"', block = true, for = "unix" },
+]
+open = [
+    { run = 'xdg-open "$@"', orphan = true, for = "unix" },
+]
+image = [
+    { run = 'imv "$@"', orphan = true, for = "unix" },
+]
+video = [
+    { run = 'vlc "$@"', orphan = true, for = "unix" },
+]
+audio = [
+    { run = 'vlc "$@"', orphan = true, for = "unix" },
+]
+pdf = [
+    { run = 'zathura "$@"', orphan = true, for = "unix" },
+]
+
+[open]
+rules = [
+    { mime = "image/*", use = "image" },
+    { mime = "video/*", use = "video" },
+    { mime = "audio/*", use = "audio" },
+    { mime = "application/pdf", use = "pdf" },
+    { mime = "text/*", use = "edit" },
+    { mime = "*", use = "open" },
+]

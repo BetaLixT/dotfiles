@@ -1,0 +1,26 @@
+# Kanagawa theme for bluetuith
+
+# Adapter color
+Adapter=#957FB8
+
+# Device colors
+Device=#DCD7BA
+DeviceConnected=#76946A
+DeviceDiscovered=#7E9CD8
+DeviceType=#727169
+DeviceProperty=#C8C093
+
+# Menu colors
+MenuBar=#1F1F28
+Menu=#2A2A37
+MenuItem=#DCD7BA
+
+# Progress colors
+ProgressText=#DCD7BA
+ProgressBar=#957FB8
+
+# Extra colors
+Text=#DCD7BA
+Border=#957FB8
+Background=#1F1F28
+StatusInfo=#7E9CD8

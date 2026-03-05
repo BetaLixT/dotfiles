@@ -96,6 +96,7 @@ require("lazy").setup({
         dependencies = { 'nvim-lua/plenary.nvim' }
     },
     { 'mrjones2014/smart-splits.nvim' },
+    { 'dhruvasagar/vim-table-mode' },
     {
         'akinsho/git-conflict.nvim',
         version = "*",
