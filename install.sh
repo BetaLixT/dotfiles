@@ -1,57 +1,45 @@
 #!/bin/bash
 
-remove_non_dirlink() {
-    if [[ -e $1 && ! -L $1 ]]; then
-        echo "${1} exists, do you want to overwrite it with a symlink?"
-        rm -rI $1
-    fi
-}
+set -e
 
 DIR="$(dirname "$(readlink -f "$0")")"
-cd $DIR
 
+# Install dependencies
+sudo apt update
+sudo apt install -y zsh tmux neovim git curl xclip
 
-mkdir -p $HOME/.config
+# Install oh-my-zsh if not present
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+fi
+
+# Symlink configs
+mkdir -p "$HOME/.config"
 
 # nvim
-remove_non_dirlink $HOME/.config/nvim
-ln -sfn $DIR/nvim $HOME/.config
+if [ -e "$HOME/.config/nvim" ] && [ ! -L "$HOME/.config/nvim" ]; then
+    echo "~/.config/nvim exists and is not a symlink, backing up to ~/.config/nvim.bak"
+    mv "$HOME/.config/nvim" "$HOME/.config/nvim.bak"
+fi
+ln -sfn "$DIR/nvim" "$HOME/.config/nvim"
 
-# i3
-remove_non_dirlink $HOME/.config/i3
-ln -sfn $DIR/i3 $HOME/.config
+# zshrc
+if [ -e "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
+    echo "~/.zshrc exists and is not a symlink, backing up to ~/.zshrc.bak"
+    mv "$HOME/.zshrc" "$HOME/.zshrc.bak"
+fi
+ln -sf "$DIR/.zshrc" "$HOME/.zshrc"
 
-# i3blocks
-remove_non_dirlink $HOME/.config/i3blocks
-ln -sfn $DIR/i3blocks $HOME/.config
+# tmux
+if [ -e "$HOME/.tmux.conf" ] && [ ! -L "$HOME/.tmux.conf" ]; then
+    echo "~/.tmux.conf exists and is not a symlink, backing up to ~/.tmux.conf.bak"
+    mv "$HOME/.tmux.conf" "$HOME/.tmux.conf.bak"
+fi
+ln -sf "$DIR/.tmux.conf" "$HOME/.tmux.conf"
 
-# regolith folder
-# mkdir -p $HOME/.config/regolith2
+# Set zsh as default shell
+if [ "$SHELL" != "$(which zsh)" ]; then
+    chsh -s "$(which zsh)"
+fi
 
-# i3 regolith user
-# remove_non_dirlink $HOME/.config/regolith
-# ln -sfn $DIR/regolith $HOME/.config
-
-# i3 regolith2 user
-# remove_non_dirlink $HOME/.config/regolith2
-# ln -sfn $DIR/regolith2 $HOME/.config
-
-# wallpapers
-remove_non_dirlink $HOME/.config/wallpapers
-ln -sfn $DIR/wallpapers $HOME/.config
-
-# Kitty config
-remove_non_dirlink $HOME/.config/kitty
-ln -sfn $DIR/kitty $HOME/.config
-
-# ZSH config
-remove_non_dirlink $HOME/.zshrc
-ln -s $DIR/.zshrc $HOME/.zshrc
-
-# tmux config
-remove_non_dirlink $HOME/.tmux.conf
-ln -s $DIR/.tmux.conf $HOME/.tmux.conf
-
-# Xresources
-remove_non_dirlink $HOME/.Xresources
-ln -s $DIR/.Xresources $HOME/.Xresources
+echo "Done! Log out and back in for zsh to take effect."
