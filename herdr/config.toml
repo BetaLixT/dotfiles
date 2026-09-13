@@ -1,0 +1,128 @@
+onboarding = false
+# Herdr configuration — https://herdr.dev
+# Deployed by install-sway-arch.sh to ~/.config/herdr/config.toml
+#
+# Validate after editing:   herdr config check
+# Apply to a live session:  herdr server reload-config   (or prefix+shift+r)
+#
+# NOTE ON SYNTAX: an unrecognised key name is NOT a hard error — Herdr reports
+# "invalid keybinding ...; disabling binding" and silently drops it. So always
+# run `herdr config check` and confirm it prints exactly "config: ok".
+# Verified against herdr 0.8.2: literal "_" is accepted, but the word
+# "underscore" is NOT (it silently disables the binding). "-" must be spelled
+# "minus".
+#
+# COLLISION DETECTION IS INCONSISTENT (verified on 0.8.2). Two prefix-mode
+# actions on one chord IS caught, and one of them is silently disabled:
+#   new_tab = "prefix+c" + new_workspace = "prefix+c"
+#     -> "prefix+c: kept keys.new_workspace, disabled keys.new_tab"
+# But a navigate-mode collision is NOT caught and reports a clean "config: ok":
+#   navigate_workspace_up = "k"  vs the default navigate_pane_up = "k"
+#     -> config: ok        <-- one of them silently wins, unpredictably
+# So "config: ok" does not prove the navigate_* keys are conflict-free. Check
+# them against each other by hand.
+#
+# Reference for v0.8.2:
+#   https://raw.githubusercontent.com/herdrdev/herdr/v0.8.2/docs/next/website/src/data/config-reference.json
+
+[theme]
+name = "kanagawa"
+auto_switch = false
+
+# Bindings aligned with ~/.tmux.conf.
+#
+# Splits: "-" is horizontal (pane below), "_" is vertical (pane right). Herdr's
+# action names use that same reading, so the names here are the intuitive ones.
+# Only tmux's flag letters are inverted relative to this, which is why the tmux
+# equivalents below look backwards -- they are correct:
+#
+#   this file              tmux equivalent            resulting layout
+#   split_horizontal "-"   bind - split-window -v     pane BELOW
+#   split_vertical   "_"   bind _ split-window -h     pane RIGHT
+#
+[keys]
+# tmux already answers to two prefixes: C-b (tmux's own built-in default, never
+# overridden in .tmux.conf) and C-a (added there as `set -g prefix2 C-a`).
+# Herdr claims whichever chord is set here first, so C-a will not reach tmux
+# from inside a Herdr pane -- C-b still does. Nothing in .tmux.conf is changed
+# by this file.
+prefix = "ctrl+a"
+
+# Splits. Herdr's default for split_vertical is "prefix+v"; "_" matches tmux.
+split_vertical = "prefix+_"
+# Already Herdr's default, but stated explicitly since it is half of the pair.
+split_horizontal = "prefix+minus"
+
+# tmux detaches with prefix+d; Herdr's default is prefix+q.
+detach = "prefix+d"
+
+# Workspaces and tabs.
+#
+# Herdr 0.8.2 has only TWO binding contexts, and neither is "the surface that
+# currently has focus":
+#   * prefix mode   -- every action lives here.
+#   * navigate mode -- ONLY the six navigate_* movement bindings below.
+# So a bare "a" to add a workspace while the workspace surface is highlighted is
+# not expressible. The binary rejects it outright, by design:
+#   new_workspace = "a"  ->  unsafe direct keybinding: keys.new_workspace = "a"
+#                            would intercept typing; use "prefix+a"
+# There is likewise no single "rename whatever is highlighted" action --
+# rename_tab and rename_workspace are separate actions on separate keys.
+#
+# prefix+a is free in Herdr (no default uses prefix+a) and does not shadow
+# .tmux.conf's `bind C-a send-prefix -2`, which is ctrl+a ctrl+a, not ctrl+a a.
+new_workspace = "prefix+a"
+
+# Renames, both matching tmux. A Herdr tab is a tmux window; a Herdr workspace
+# is the closest thing to a tmux session. Neither key is overridden in
+# .tmux.conf (and there is no ~/.tmux.conf.local), so both are tmux built-ins:
+#   tmux: bind ,  command-prompt rename-window    -> Herdr tab
+#   tmux: bind $  command-prompt rename-session   -> Herdr workspace
+rename_tab = "prefix+,"
+# NOT prefix+$ (tmux's rename-session key), despite that being the parity
+# choice. Tested on this machine: "$" is shift+4, and SHIFTED PUNCTUATION DOES
+# NOT SURVIVE the tmux -> herdr stack -- the chord never reaches Herdr. It
+# passes `herdr config check` regardless, because check validates SYNTAX ONLY,
+# not key delivery. Do not trust "config: ok" as proof a chord works.
+#
+# Scope of the problem, confirmed by testing both:
+#   prefix+,  (unshifted punctuation) -> ARRIVES
+#   prefix+$  (shift+4)               -> EATEN
+# So it is the shift layer over punctuation, not punctuation as such. Anything
+# in that class -- "<" (shift+,), ">" (shift+.), "prefix+shift+4" -- will fail
+# the same way. For a shifted binding use a LETTER: prefix+shift+w validates
+# clean and is free again if this key ever needs to move.
+#
+# prefix+. is therefore chosen for adjacency, not parity: "," renames the tab,
+# "." renames the workspace, neighbouring keys, both unshifted.
+rename_workspace = "prefix+."
+
+# prefix+1..9 stays on tabs (switch_tab, Herdr default). switch_workspace is
+# unset by default, which is why prefix+2 has only ever selected tab 2.
+switch_workspace = "prefix+shift+1..9"
+
+# Navigate-mode movement -- the only bindings allowed to be bare keys.
+# Herdr ships these two as the literal ARROW keys ("up"/"down"), which is the
+# whole reason the home row does nothing in the workspace list: h/j/k/l there
+# are navigate_pane_*, not workspace movement.
+#
+# Shift is load-bearing here. Plain "j"/"k" collide with navigate_pane_down/up,
+# and that collision is NOT reported -- see the collision note at the top.
+navigate_workspace_up = "shift+k"
+navigate_workspace_down = "shift+j"
+
+# Left at Herdr defaults because they ALREADY match tmux:
+#   focus_pane_left/down/up/right = prefix+h/j/k/l   (tmux: select-pane -L/D/U/R)
+#   navigate_pane_*              = bare h/j/k/l      (tmux: bind -r repeat)
+#   new_tab                      = prefix+c          (tmux: new-window)
+#   close_pane                   = prefix+x          (tmux: kill-pane)
+#   next_tab / previous_tab      = prefix+n / p
+#   switch_tab                   = prefix+1..9
+#   zoom                         = prefix+z
+#   copy_mode                    = prefix+[
+#   rename_tab default (prefix+shift+t) is REPLACED above, not kept
+#   workspace_picker             = prefix+w    (opens navigate mode)
+#   close_workspace              = prefix+shift+d
+
+[ui]
+agent_panel_sort = "priority"

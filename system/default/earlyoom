@@ -1,0 +1,38 @@
+# earlyoom - userspace OOM killer, acts BEFORE the kernel OOM killer.
+#
+# Why: on 2026-08-10 a leaked Claude Code process reached 11.6 GB, exhausted the
+# 4 GB zram swap (236 kB free), and the desktop stalled for ~1 minute before the
+# kernel OOM killer fired. earlyoom reclaims while the machine is still usable.
+#
+# IMPORTANT quoting rules. earlyoom.service does
+# `ExecStart=/usr/bin/earlyoom $EARLYOOM_ARGS`, and systemd word-splits that on
+# whitespace without re-processing inner quotes. So:
+#   - the whole value is wrapped in ONE pair of double quotes (systemd's
+#     EnvironmentFile parser strips these, and it keeps the file sourceable by sh)
+#   - the regexes contain NO inner quotes and NO spaces -- `.` stands in for a
+#     literal space (e.g. `Isolated.Web.Co`)
+#   - the regexes contain NO backslashes; `[.]` is used instead of `\.` because
+#     systemd's parser may consume backslash escapes inside double quotes
+# Verify what was actually parsed with:
+#   journalctl -u earlyoom -b | head -20
+#
+# Thresholds (-m memory, -s swap). earlyoom only acts when BOTH are below their
+# minimum. First value = SIGTERM, second = SIGKILL.
+#   -m 10,5  -> SIGTERM under ~3.1 GB available, SIGKILL under ~1.5 GB (of 31 GiB)
+#   -s 20,8  -> only once swap is mostly gone, so a brief spike is absorbed by
+#               zram instead of killing something. Kept as a percentage so it
+#               rescales automatically when the disk swapfile is added.
+#
+# --sort-by-rss: pick the physically largest process instead of the highest
+# oom_score. Firefox/Zen sets oom_score_adj=200 on its content processes, so
+# score-based selection killed a 1.7 GB browser tab while the actual 11.6 GB
+# offender kept growing -- exactly what happened on 2026-08-10.
+#
+# --prefer: known ballooners. `[0-9]+[.][0-9]+[.][0-9]+` matches Claude Code,
+# which execs a version-named binary (~/.local/share/claude/versions/2.1.224),
+# so its comm is literally "2.1.224".
+#
+# --avoid: session-critical processes. Killing these turns a recoverable
+# incident into a lost session (tmux: server owns every dev session).
+
+EARLYOOM_ARGS="-r 3600 -n -m 10,5 -s 20,8 --sort-by-rss --prefer ^([0-9]+[.][0-9]+[.][0-9]+|Isolated.Web.Co|Web.Content|WebExtensions|RDD.Process|Utility.Process)$ --avoid ^(systemd|systemd-.*|sway|swaybar|swaync|swayidle|swaylock|Xwayland|pipewire|pipewire-pulse|wireplumber|dbus-daemon|dbus-broker|sshd|tmux:.server|seatd|polkitd|NetworkManager|login|earlyoom)$"

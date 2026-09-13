@@ -50,6 +50,10 @@ return {
 			vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
 			vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, opts)
 			vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, opts)
+			-- Code actions were missing entirely. They matter everywhere, but
+			-- especially in C#, where 'add using', 'implement interface' and
+			-- 'generate constructor' are all delivered as code actions.
+			vim.keymap.set({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, opts)
 
 			-- Inlay Hints
 			if client.server_capabilities.inlayHintProvider then

@@ -53,7 +53,12 @@ require("lazy").setup({
         lazy = false,
         priority = 1000,
     },
-    { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
+    {
+        "nvim-treesitter/nvim-treesitter",
+        branch = "main",   -- `master` is frozen upstream at Neovim 0.11
+        lazy = false,      -- upstream: "This plugin does not support lazy-loading"
+        build = ":TSUpdate",
+    },
     { "mbbill/undotree" },
     { "nvim-lua/lsp-status.nvim" },
     { "nvim-tree/nvim-web-devicons" },
@@ -136,33 +141,41 @@ require("lazy").setup({
     require("lazy/cocmp"),
     require("lazy/lsp"),
     require("lazy/dap"),
+    require("lazy/roslyn"),
 })
 
-require 'nvim-treesitter.configs'.setup {
-    -- A list of parser names, or "all" (the five listed parsers should always be installed)
-    ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "javascript", "typescript", "go", "dockerfile", "python", "rust", "zig" },
+-- Treesitter, nvim-treesitter `main` branch.
+--
+-- Why `main` and not `master`: upstream froze `master` and supports it only up
+-- to Neovim 0.11. On 0.12 its query directives break, because a query match
+-- value became a LIST of nodes rather than a single node. So master's
+-- query_predicates.lua calls :range() on a table and throws during redraw:
+--   treesitter.lua:197: attempt to call method 'range' (a nil value)
+-- ...usually surfacing via the conceal_line decoration provider while
+-- processing injections. `main` is a full rewrite; it needs Neovim 0.12+ and
+-- tree-sitter-cli (from pacman, not npm).
+--
+-- Differences from the old config, all deliberate:
+--   * `ensure_installed` -> `install{}`
+--   * `highlight.enable` -> core's vim.treesitter.start() in a FileType autocmd
+--   * `additional_vim_regex_highlighting = false` -> now the default
+--   * `auto_install` has no equivalent; parsers are installed explicitly here,
+--     which also stops surprise compiles when opening an unfamiliar filetype.
+--   * parsers now live in stdpath("data").."/site", not in the plugin directory
 
-    -- Install parsers synchronously (only applied to `ensure_installed`)
-    sync_install = false,
+require("nvim-treesitter").install({
+    "c", "lua", "vim", "vimdoc", "query",
+    "javascript", "typescript", "go", "dockerfile",
+    "python", "rust", "zig", "c_sharp", "razor",
+})
 
-    -- Automatically install missing parsers when entering buffer
-    -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
-    auto_install = true,
-
-    highlight = {
-        enable = true,
-        -- Or use a function for more flexibility, e.g. to disable slow treesitter highlight for large files
-
-        -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-        -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
-        -- Using this option may slow down your editor, and you may see some duplicate highlights.
-        -- Instead of true it can also be a list of languages
-        additional_vim_regex_highlighting = false,
-        -- disable = function(lang, bufnr) -- Disable in large C++ buffers
-        --    return lang == "terraform" and vim.api.nvim_buf_line_count(bufnr) > 700
-        -- end,
-    },
-}
+-- No pattern filter: pcall means any buffer with an available parser gets
+-- highlighting, and buffers without one are left alone silently.
+vim.api.nvim_create_autocmd("FileType", {
+    callback = function(args)
+        pcall(vim.treesitter.start, args.buf)
+    end,
+})
 
 -- require("selmod").setup({debug = true})
 

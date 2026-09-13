@@ -157,22 +157,112 @@ return {
             dap.configurations.javascript = js_config
             dap.configurations.typescript = js_config
 
-            -- C# (netcoredbg)
+            -- C# / .NET (netcoredbg, installed via mason)
+            --
+            -- Mason puts its bin dir on Neovim's PATH, so "netcoredbg" resolves.
+            -- The absolute path is used as a fallback so this still works if a
+            -- future config stops prepending mason's bin.
+            local netcoredbg = vim.fn.exepath("netcoredbg")
+            if netcoredbg == "" then
+                netcoredbg = vim.fn.stdpath("data") .. "/mason/bin/netcoredbg"
+            end
+
             dap.adapters.coreclr = {
                 type = "executable",
-                command = "netcoredbg",
+                command = netcoredbg,
                 args = { "--interpreter=vscode" },
             }
+
+            -- Find launchable assemblies in the current solution.
+            --
+            -- A plain glob over bin/Debug is useless here: the output directory
+            -- of one project also contains every referenced project and NuGet
+            -- assembly. Instead, walk the .csproj files and, for each, look for
+            -- the assembly named after that project. Then require a matching
+            -- runtimeconfig.json, which only executable projects produce - that
+            -- is what filters out class libraries such as Core and Services.
+            local function launchable_dlls()
+                local root = vim.fn.getcwd()
+                local projects = vim.fs.find(function(name)
+                    return name:match("%.csproj$")
+                end, { path = root, type = "file", limit = 50 })
+
+                local found = {}
+                for _, proj in ipairs(projects) do
+                    local dir = vim.fs.dirname(proj)
+                    local name = vim.fn.fnamemodify(proj, ":t:r")
+                    for _, dll in ipairs(vim.fn.glob(
+                        dir .. "/bin/Debug/net*/" .. name .. ".dll", false, true)) do
+                        local runtimecfg = dll:gsub("%.dll$", ".runtimeconfig.json")
+                        if vim.fn.filereadable(runtimecfg) == 1 then
+                            table.insert(found, dll)
+                        end
+                    end
+                end
+                return found
+            end
+
+            -- Build before launching, otherwise it is very easy to step through
+            -- stale IL and misread the result.
+            local function build_then_pick(cb)
+                vim.notify("dotnet build…", vim.log.levels.INFO)
+                vim.system({ "dotnet", "build" }, { text = true }, function(res)
+                    vim.schedule(function()
+                        if res.code ~= 0 then
+                            vim.notify("dotnet build failed; not launching\n"
+                                .. (res.stderr ~= "" and res.stderr or res.stdout),
+                                vim.log.levels.ERROR)
+                            return
+                        end
+                        local dlls = launchable_dlls()
+                        if #dlls == 0 then
+                            cb(vim.fn.input("Path to dll: ", vim.fn.getcwd() .. "/", "file"))
+                        elseif #dlls == 1 then
+                            cb(dlls[1])
+                        else
+                            vim.ui.select(dlls, { prompt = "Which assembly?" }, function(choice)
+                                if choice then cb(choice) end
+                            end)
+                        end
+                    end)
+                end)
+            end
+
             dap.configurations.cs = {
                 {
                     type = "coreclr",
-                    name = "launch - netcoredbg",
+                    name = "launch (build first)",
                     request = "launch",
                     program = function()
-                        return vim.fn.input("Path to dll: ", vim.fn.getcwd() .. "/bin/Debug/", "file")
+                        return coroutine.create(function(co)
+                            build_then_pick(function(path)
+                                coroutine.resume(co, path)
+                            end)
+                        end)
                     end,
+                    cwd = "${workspaceFolder}",
+                    env = { ASPNETCORE_ENVIRONMENT = "Development" },
+                },
+                {
+                    type = "coreclr",
+                    name = "launch (pick dll, no build)",
+                    request = "launch",
+                    program = function()
+                        return vim.fn.input("Path to dll: ", vim.fn.getcwd() .. "/", "file")
+                    end,
+                    cwd = "${workspaceFolder}",
+                },
+                {
+                    -- For attaching to something already running, including a
+                    -- process inside a container with the debugger port exposed.
+                    type = "coreclr",
+                    name = "attach to process",
+                    request = "attach",
+                    processId = require("dap.utils").pick_process,
+                    cwd = "${workspaceFolder}",
                 },
             }
+            dap.configurations.razor = dap.configurations.cs
 
             -- Keymaps
             vim.keymap.set("n", "<leader>dd", dapui.toggle, { desc = "Debug: Open/Toggle UI" })

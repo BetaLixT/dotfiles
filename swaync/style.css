@@ -1,0 +1,79 @@
+/* Kanagawa theme for swaync
+   sumiInk0 #16161D  sumiInk1 #1F1F28  sumiInk3 #363646  sumiInk4 #54546D
+   fujiWhite #DCD7BA  oldWhite #C8C093  oniViolet #957FB8  crystalBlue #7E9CD8
+   fujiGray #727169 */
+
+* {
+  font-family: monospace;
+  font-size: 13px;
+  color: #DCD7BA;
+}
+
+.notification-row { outline: none; }
+
+.notification {
+  background: transparent;
+  margin: 6px 10px;
+  padding: 0;
+}
+
+.notification-background { background: transparent; }
+
+.notification-content {
+  background: #1F1F28;
+  border: 2px solid #957FB8;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+/* urgency variants: stay Kanagawa, no alarming red even for critical */
+.notification.low .notification-content    { border-color: #54546D; }
+.notification.normal .notification-content  { border-color: #957FB8; }
+.notification.critical .notification-content { border-color: #7E9CD8; }
+
+.summary { font-weight: bold; font-size: 14px; color: #DCD7BA; }
+.time    { color: #727169; }
+.body    { color: #C8C093; margin-top: 6px; }
+
+/* close (X) button */
+.close-button {
+  background: transparent;
+  color: #727169;
+  border: none;
+  border-radius: 6px;
+  margin: 4px;
+  padding: 2px 8px;
+}
+.close-button:hover { background: #363646; color: #DCD7BA; }
+
+/* main body click area (no extra chrome) */
+.notification-default-action { background: transparent; border-radius: 10px; }
+.notification-default-action:hover { background: transparent; }
+
+/* Approve / Deny action buttons */
+.notification-action {
+  background: #363646;
+  color: #DCD7BA;
+  border: 1px solid #54546D;
+  border-radius: 8px;
+  margin: 8px 4px 2px 4px;
+  padding: 8px 12px;
+}
+.notification-action:hover { background: #2A2A37; border-color: #957FB8; }
+
+/* control center panel */
+.control-center {
+  background: #16161D;
+  border: 2px solid #363646;
+  border-radius: 12px;
+  padding: 10px;
+}
+.widget-title { color: #DCD7BA; font-size: 15px; margin: 8px; }
+.widget-title > button {
+  background: #363646; color: #DCD7BA; border-radius: 8px; padding: 4px 10px;
+}
+.widget-title > button:hover { background: #957FB8; color: #16161D; }
+.widget-dnd { color: #DCD7BA; margin: 8px; }
+.widget-dnd > switch { background: #363646; border-radius: 12px; }
+.widget-dnd > switch:checked { background: #957FB8; }
+.notification-group-header { color: #C8C093; }

@@ -36,3 +36,18 @@ background-color=#C34043
 text-color=#ffffff
 border-color=#E82424
 default-timeout=0
+
+# Claude Code approval prompts: left-click = Approve, right-click = Deny.
+# Scoped to app-name so normal notifications keep their default click behavior.
+[app-name="claude-approval"]
+background-color=#1F1F28
+text-color=#DCD7BA
+border-color=#957FB8
+default-timeout=100000
+width=520
+height=360
+padding=18
+font=monospace 12
+markup=0
+on-button-left=invoke-action allow
+on-button-right=invoke-action deny

@@ -1,0 +1,102 @@
+# tuigreet configuration, deployed to /etc/tuigreet/config.toml
+#
+# tuigreet loads, in priority order:
+#   1. ~/.config/tuigreet/config.toml   (user - not usable here, greeter user)
+#   2. /etc/tuigreet/config.toml        (system - this file)
+#   3. --config <path>
+# CLI args beat env vars beat user config beats system config.
+#
+# Colours accept "#RRGGBB", "0xRRGGBB", or ratatui named colours; hex parsing is
+# covered by upstream tests in ui/bg_animation/mod.rs.
+#
+# TRUECOLOR NOTE: these hex values only render correctly because the greeter
+# runs inside alacritty inside cage. On a bare Linux VT the console is an
+# 8-colour terminal (verified: `tput -T linux colors` -> 8) and every one of
+# these would be crushed to the nearest ANSI slot. That was the bug that made
+# ly's Kanagawa palette look grey.
+
+[theme]
+container = "#1F1F28"   # sumiInk1    - alacritty's background
+text       = "#DCD7BA"  # fujiWhite
+border     = "#957FB8"  # oniViolet   - matches sway's focused border
+title      = "#957FB8"  # oniViolet
+prompt     = "#7E9CD8"  # crystalBlue
+input      = "#E6C384"  # carpYellow
+greet      = "#7AA89F"  # waveAqua2
+time       = "#7AA89F"  # waveAqua2
+action     = "#C0A36E"  # boatYellow2
+button     = "#E6C384"  # carpYellow   - key hints (ESC/F2/F3/F12/F4/SESS).
+                        # Brighter twin of action's boatYellow2 below, so the
+                        # key reads as the prominent token and its label recedes.
+                        # Was springGreen, the only green in the UI - it clashed,
+                        # especially over the blue wave background.
+
+[background]
+# "wave" is a LOCAL animation, not upstream -- it needs the custom build from
+# system/tuigreet/build.sh. If that binary is absent the greeter falls back to
+# the packaged tuigreet, which does not know this name and simply draws no
+# animation (verified). So this line is safe on a machine that has not built it.
+# Aliases: "wave", "water".  Upstream alternatives: "doom" | "matrix" | "none".
+kind = "wave"
+fps = 30
+
+[background.wave]
+# Kanagawa water. The domain warp and block-glyph shading are ported from ly's
+# src/animations/ColorMix.zig; the surface, depth ramp and foam are local.
+# Every key is optional -- omitted keys use the tuned defaults in wave.rs.
+# Tune interactively without rebuilding: python3 scripts/wave-preview.py
+crest_color = "#A3D4D5"  # lightBlue   - the waterline
+upper_color = "#7E9CD8"  # crystalBlue - just below the surface
+mid_color   = "#6A9589"  # waveAqua1
+deep_color  = "#2D4F67"  # waveBlue2
+abyss_color = "#223249"  # waveBlue1   - fades into the container background
+foam_color  = "#DCD7BA"  # fujiWhite   - foam on steep crests
+level       = 0.62       # waterline, as a fraction of screen height
+amplitude   = 1.0        # swell height multiplier
+speed       = 1.0        # horizontal scroll multiplier
+warp        = 0.55       # texture strength; 0.0 gives flat depth bands
+foam_slope  = 0.55       # gradient needed for foam; higher means less foam
+
+[background.doom]
+# height 1-9 (taller flames at higher values), spread 0-4 (horizontal jitter)
+height = 5
+spread = 2
+top_color    = "#C34043"  # autumnRed   - flame tips
+middle_color = "#DCA561"  # autumnYellow
+bottom_color = "#1F1F28"  # sumiInk1    - fades into the background colour
+
+# The other animation shipped upstream. F4 switches live without a restart, so
+# this is here for reference rather than needing a config change:
+#   kind = "matrix"
+#   [background.matrix]
+#   head_color = "#DCD7BA"  bright_color = "#98BB6C"  dim_color = "#2B3328"
+#
+# Only doom and matrix exist out of the box. The upstream `Animation` trait plus
+# the KINDS registry in crates/tuigreet/src/ui/bg_animation/mod.rs make new ones
+# straightforward to add, but only in Rust at compile time - there is no runtime
+# plugin loading. Porting ly's colormix would be a small PR.
+
+# Password masking. The old `--asterisks` flag and `[display] asterisks` are
+# deprecated upstream in favour of this; secret.mode wins if both are set.
+# Session list. Deliberately NOT /usr/share/wayland-sessions: that directory
+# also holds the stock sway.desktop, which runs `sway` directly and therefore
+# produces no journal log. Having both listed means one careless F3 pick
+# silently loses logging - which is exactly what happened on 2026-09-11.
+#
+# /etc/greetd/sessions holds only sway-logged.desktop, so the single offered
+# session always routes through /usr/local/bin/start-sway.
+#
+# Fallback if the wrapper ever breaks: log in on tty2-6 and run `sway` directly.
+[session]
+sessions_dirs = ["/etc/greetd/sessions"]
+xsessions_dirs = []
+
+[secret]
+mode = "characters"
+characters = "*"
+
+[keybindings]
+command  = 2    # F2  - change session command
+sessions = 3    # F3  - pick session
+background = 4  # F4  - switch animation
+power    = 12   # F12 - power menu

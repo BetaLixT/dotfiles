@@ -7,6 +7,23 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "project_panel": {
+    "dock": "left"
+  },
+  "outline_panel": {
+    "dock": "left"
+  },
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "agent": {
+    "dock": "right",
+    "favorite_models": [],
+    "model_parameters": []
+  },
+  "git_panel": {
+    "dock": "left"
+  },
   "assistant": {
     "default_model": {
       "provider": "anthropic",
@@ -18,12 +35,25 @@
     {
       "host": "contour",
       "username": "dcruza",
-      "upload_binary_over_ssh": true,
+      "args": [],
       "projects": [
         {
-          "paths": ["~/homelab"]
+          "paths": [
+            "/home/dcruza"
+          ]
+        },
+        {
+          "paths": [
+            "/home/dcruza/homelab/terraform"
+          ]
+        },
+        {
+          "paths": [
+            "~/homelab"
+          ]
         }
-      ]
+      ],
+      "upload_binary_over_ssh": true
     }
   ],
   "vim_mode": true,

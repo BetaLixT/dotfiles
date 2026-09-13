@@ -128,7 +128,7 @@ alias open="xdg-open"
 
 # unalias gm
 
-export PATH=$HOME/.dotnet:$PATH
+export PATH=$HOME/.dotnet:$HOME/.dotnet/tools:$PATH
 # export DOTNET_ROOT=/home/dcruza/.dotnet
 export PATH=/usr/local/go/bin:$PATH
 export PATH=/home/dcruza/bin:$PATH

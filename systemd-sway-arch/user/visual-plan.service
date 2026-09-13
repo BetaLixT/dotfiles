@@ -1,0 +1,56 @@
+# Visual Plan — self-hosted Agent-Native Plan app.
+#
+# Rendered from this template by deploy/systemd/install-user-service.sh, which
+# substitutes /home/dcruza/projects/personal/visual-plan/visual-plan/templates/plan and /home/dcruza/.nvm/versions/node/v22.23.1/bin/node and installs to
+# ~/.config/systemd/user/visual-plan.service.
+#
+# Deliberately NOT enabled: this is a development tool, started on demand.
+#   systemctl --user start visual-plan
+#   systemctl --user status visual-plan
+#   systemctl --user stop visual-plan
+
+[Unit]
+Description=Visual Plan (self-hosted Agent-Native Plan app)
+Documentation=https://github.com/BetaLixT/visual-plan
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/dcruza/projects/personal/visual-plan/visual-plan/templates/plan
+ExecStart=/home/dcruza/.nvm/versions/node/v22.23.1/bin/node /home/dcruza/projects/personal/visual-plan/visual-plan/templates/plan/.output/server/index.mjs
+
+Environment=NODE_ENV=production
+# Loopback only. The whole point of self-hosting is that plan content never
+# leaves this machine; do not bind 0.0.0.0.
+Environment=HOST=127.0.0.1
+Environment=NITRO_HOST=127.0.0.1
+Environment=PORT=8096
+Environment=NITRO_PORT=8096
+
+# Analytics stay off. GTM_CONTAINER_ID, AGENT_NATIVE_BUILD_GTM_CONTAINER_ID,
+# GA_MEASUREMENT_ID, AGENT_NATIVE_BUILD_GA_MEASUREMENT_ID, VITE_AMPLITUDE_API_KEY,
+# VITE_SENTRY_CLIENT_DSN and VITE_SENTRY_DSN are intentionally unset. Note the
+# VITE_* and *_BUILD_* ones are baked at build time, so setting them here would
+# not switch analytics on anyway — rebuild from a clean environment instead.
+
+# Optional local overrides; absent by default (leading "-" makes it optional).
+EnvironmentFile=-%h/.config/visual-plan/env
+
+Restart=on-failure
+RestartSec=3
+
+# Hardening. ProtectSystem=strict makes the whole hierarchy read-only, so the
+# app directory has to be granted back explicitly for SQLite and plan writes.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectControlGroups=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+ReadWritePaths=/home/dcruza/projects/personal/visual-plan/visual-plan/templates/plan
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

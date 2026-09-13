@@ -1,0 +1,7 @@
+identifier	connector	make	model	serial	mode	scale	edid_unique	notes
+InfoVision Optoelectronics (Kunshan) Co.,Ltd China 0x0641 Unknown	eDP-1	InfoVision Optoelectronics (Kunshan) Co.,Ltd China	0x0641	Unknown	1920x1200@60.0Hz	1.0	n/a	Internal panel. eDP-1 is permanently stable; EDID keying unnecessary.
+Samsung Electric Company S32B80P HNTT800050	DP-4	Samsung Electric Company	S32B80P	HNTT800050	3840x2160@60.0Hz	1.5	YES	Desk pair, UPPER (pos 3440,0). Unique serial - safe to key on EDID.
+Samsung Electric Company S32B80P HNTT900055	DP-3	Samsung Electric Company	S32B80P	HNTT900055	3840x2160@60.0Hz	1.5	YES	Desk pair, LOWER (pos 3440,1440). Unique serial - safe to key on EDID.
+ASUSTek COMPUTER INC MQ149CD T5LMCD002864	DP-5	ASUSTek COMPUTER INC	MQ149CD	T5LMCD002864	1920x1200@60.0Hz	1.0	NO	Portable pair, LOWER (pos 3440,1440). DUPLICATE serial with DP-6 - EDID keying impossible.
+ASUSTek COMPUTER INC MQ149CD T5LMCD002864	DP-6	ASUSTek COMPUTER INC	MQ149CD	T5LMCD002864	1920x1200@60.0Hz	1.0	NO	Portable pair, UPPER (pos 3440,240). DUPLICATE serial with DP-5 - EDID keying impossible.
+HDMI-A-1 (ultrawide)	HDMI-A-1	UNKNOWN	UNKNOWN	UNKNOWN	3440x1440	1.0	UNKNOWN	NOT YET CAPTURED - was not connected during the 2026-08-27 survey. Run scripts/capture-monitors.sh while it is plugged in.

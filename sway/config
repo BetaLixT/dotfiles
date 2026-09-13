@@ -8,7 +8,7 @@
 exec systemctl --user import-environment GTK_THEME SWAYSOCK DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 exec dbus-update-activation-environment --systemd GTK_THEME=Kanagawa-Dark SWAYSOCK DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP
 
-exec mako
+exec swaync
 
 # Night light (constant warm filter)
 exec wlsunset -t 5500 -T 5501
@@ -269,6 +269,9 @@ mode "options" {
     bindsym t exec pkill rofi; exec alacritty --class floating-term -e btop; mode "default"
     bindsym f exec pkill rofi; exec alacritty --class floating-term -e yazi; mode "default"
     bindsym l exec pkill rofi; exec swaylock -f; mode "default"
+    # wdisplays: GUI display config. Applies live and never writes any config
+    # file, so it cannot conflict with the output rules further down.
+    bindsym d exec pkill rofi; exec wdisplays; mode "default"
 
     # Rofi-based (need delay after killing options menu)
     bindsym p exec pkill rofi && sleep 0.1 && ~/dotfiles/scripts/power-menu.sh; mode "default"
@@ -277,6 +280,7 @@ mode "options" {
     bindsym c exec pkill rofi && sleep 0.1 && ~/dotfiles/scripts/clipboard-history.sh; mode "default"
     bindsym k exec pkill rofi && hyprpicker -a; mode "default"
     bindsym e exec pkill rofi && sleep 0.1 && rofimoji --action copy; mode "default"
+    bindsym o exec pkill rofi && sleep 0.1 && ~/dotfiles/scripts/audio-output-menu.sh; mode "default"
 
     # Show menu with all options
     bindsym m exec ~/dotfiles/scripts/options-menu.sh; mode "default"
@@ -290,6 +294,9 @@ bindsym $mod+o mode "options"; exec ~/dotfiles/scripts/options-menu.sh
 # Floating terminal for TUI apps
 for_window [app_id="floating-term"] floating enable, resize set 1200 800, border pixel 2
 for_window [app_id="floating-term-small"] floating enable, resize set 600 400, border pixel 2
+# wdisplays. Matched loosely because the GTK app_id may be either the plain
+# binary name or the full application id from its .desktop file.
+for_window [app_id="^(wdisplays|network\.cycles\.wdisplays)$"] floating enable, resize set 1100 700, border pixel 2
 
 #
 # Utilities:
@@ -349,20 +356,46 @@ gaps inner 3
 #
 # Outputs:
 #
-output DP-3 scale 1.5
-output DP-4 scale 1.5
+# Displays are matched two different ways, out of necessity:
+#
+#   Samsung S32B80P pair - matched by EDID ("make model serial"). Each has a
+#       unique serial, so its settings follow the physical panel regardless of
+#       which dock port it lands on.
+#   ASUS MQ149CD pair    - matched by connector name. BOTH panels report the
+#       identical serial T5LMCD002864, so EDID cannot tell them apart: one EDID
+#       rule would match both and stack them at the same position. Connector
+#       name is the only discriminator these two expose.
+#   eDP-1                - built-in panel; its connector name never changes.
+#
+# Full survey of every known display: docs/monitor-inventory.tsv
+#
+# ORDER MATTERS: connector-keyed rules come first, EDID rules after. Sway
+# applies output directives in order with later ones overriding, so if a
+# Samsung is ever plugged into DP-5/DP-6 its EDID rule still wins.
+
+set $mon_samsung_upper "Samsung Electric Company S32B80P HNTT800050"
+set $mon_samsung_lower "Samsung Electric Company S32B80P HNTT900055"
+
+output DP-5 scale 1
+output DP-6 scale 1
+output $mon_samsung_lower scale 1.5
+output $mon_samsung_upper scale 1.5
 
 
 output HDMI-A-1 resolution 3440x1440 pos 0 0
 output eDP-1 pos 1520 1440
-output DP-3 pos 3440 1440
-output DP-4 pos 3440 0
+output DP-5 pos 3440 1440
+output DP-6 pos 3440 240
+output $mon_samsung_lower pos 3440 1440
+output $mon_samsung_upper pos 3440 0
 
+# Desk (Samsung) target first, portable (ASUS) as fallback, so a workspace
+# lands on the equivalent physical position in either setup.
 workspace 11 output HDMI-A-1
 workspace 1 output eDP-1
-workspace 10 output DP-3
-workspace 8 output DP-4
-workspace 9 output DP-4
+workspace 10 output $mon_samsung_lower DP-5
+workspace 8 output $mon_samsung_upper DP-6
+workspace 9 output $mon_samsung_upper DP-6
 
 bindsym $mod+Control+Shift+Right move workspace to output right
 bindsym $mod+Control+Shift+Left move workspace to output left

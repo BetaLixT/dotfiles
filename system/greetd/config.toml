@@ -1,0 +1,42 @@
+# greetd configuration, deployed to /etc/greetd/config.toml
+#
+# THE cage + alacritty WRAPPER: tuigreet is a TUI, and a bare Linux VT is an
+# 8-colour terminal (`tput -T linux colors` -> 8), which crushes Kanagawa hex
+# values to grey. Running it inside a real Wayland terminal inside a minimal
+# compositor gives truecolor AND proper font rendering.
+#
+#   cage        minimal Wayland compositor, runs one app fullscreen
+#   -s          allow VT switching, so Ctrl+Alt+F<n> keeps working
+#   alacritty   the terminal; --config-file is required because the greeter runs
+#               as the `greeter` user and cannot read /home/dcruza/.config
+#   tuigreet-custom
+#               a wrapper (scripts/tuigreet-custom.sh -> /usr/local/bin). It runs
+#               the locally built tuigreet from /usr/local/lib/tuigreet if that
+#               exists -- that build adds the `wave` animation, which upstream
+#               cannot load at runtime -- and otherwise falls back to the
+#               packaged /usr/bin/tuigreet. Naming the wrapper rather than the
+#               custom binary is deliberate: on a machine where the build has
+#               not run, greetd must still start a greeter. The greeter's own
+#               settings are in /etc/tuigreet/config.toml.
+#               See docs/tuigreet-wave.md.
+#
+# vt = 1 ON PURPOSE. The packaged greetd.service declares
+# `Conflicts=getty@tty1.service`, so it is built for tty1. Setting vt = 2 while
+# the unit conflicts tty1 means starting greetd tears down the tty1 getty for no
+# reason - and because getty@tty1 has TTYVHangup=yes, that SIGHUPs anything
+# whose controlling terminal is tty1. That killed a running sway session on
+# 2026-09-11. Keep this aligned with the unit; tty2-6 remain text-login escape
+# hatches.
+#
+# No --cmd here on purpose either: the session list comes from
+# /usr/share/wayland-sessions, where sway-logged.desktop points at
+# /usr/local/bin/start-sway. An earlier version used `--cmd start-sway`, which
+# can never resolve - start-sway lives in ~/.local/bin, which is only on PATH
+# via .zshrc-lnx, and greetd runs sessions with a minimal environment.
+
+[terminal]
+vt = 1
+
+[default_session]
+command = "cage -s -- alacritty --config-file /etc/greetd/alacritty.toml -e /usr/local/bin/tuigreet-custom --remember --remember-user-session --time"
+user = "greeter"

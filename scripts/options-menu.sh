@@ -7,6 +7,8 @@ show_menu() {
     echo -en "Bluetooth (b)\0icon\x1fbluetooth\n"
     echo -en "Network (n)\0icon\x1fnetwork-wireless\n"
     echo -en "Audio (a)\0icon\x1faudio-volume-high\n"
+    echo -en "Audio output (o)\0icon\x1faudio-speakers\n"
+    echo -en "Displays (d)\0icon\x1fpreferences-desktop-display\n"
     echo -en "Screenshot (s)\0icon\x1fapplets-screenshooter\n"
     echo -en "Record (r)\0icon\x1fmedia-record\n"
     echo -en "Clipboard (c)\0icon\x1fedit-paste\n"
@@ -25,6 +27,8 @@ case "$chosen" in
     *"(b)"*) alacritty --class floating-term -e bluetuith ;;
     *"(n)"*) alacritty --class floating-term -e ~/dotfiles/scripts/nmtui-kanagawa.sh ;;
     *"(a)"*) alacritty --class floating-term -e pulsemixer ;;
+    *"(o)"*) ~/dotfiles/scripts/audio-output-menu.sh ;;
+    *"(d)"*) wdisplays ;;
     *"(s)"*) ~/dotfiles/scripts/screenshot-menu.sh ;;
     *"(r)"*) ~/dotfiles/scripts/recorder-menu.sh ;;
     *"(c)"*) ~/dotfiles/scripts/clipboard-history.sh ;;

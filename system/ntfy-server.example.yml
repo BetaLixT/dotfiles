@@ -1,0 +1,25 @@
+# Minimal self-hosted ntfy config for Claude phone-approvals.
+# Install to /etc/ntfy/server.yml (needs root), then: sudo systemctl enable --now ntfy
+#
+# Locked down: nothing is readable/writable without a token. Bound to the
+# Tailscale interface so it is not exposed on public interfaces.
+
+# Advertised base URL. Use your laptop's Tailscale IP.
+base-url: "http://100.x.y.z:8080"
+
+# Listen on all interfaces on 8080; Tailscale + deny-all keep it private.
+# (To bind strictly to the tailscale IP: "100.x.y.z:8080".)
+listen-http: ":8080"
+
+# Auth: deny everything unless a token grants access.
+auth-file: "/var/lib/ntfy/user.db"
+auth-default-access: "deny-all"
+
+# Keep messages around briefly so a verdict tapped a moment late still lands.
+cache-file: "/var/lib/ntfy/cache.db"
+cache-duration: "12h"
+
+# --- After first start, create the user, scope it, and mint a token ---
+#   sudo ntfy user add --role=user claude          # prompts for a password
+#   sudo ntfy access claude "claude-*" rw          # rw only on claude-* topics
+#   sudo ntfy token add claude                     # prints tk_...  -> env file + phone

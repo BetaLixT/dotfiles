@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Sway (logged)
+Comment=Sway launched through start-sway, so its log goes to journalctl -t sway
+Exec=/usr/local/bin/start-sway
+Type=Application
+DesktopNames=sway;wlroots

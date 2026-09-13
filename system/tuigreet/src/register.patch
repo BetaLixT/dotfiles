@@ -1,0 +1,172 @@
+diff --git a/crates/tuigreet-config/src/schema.rs b/crates/tuigreet-config/src/schema.rs
+index b796a32..c36674a 100644
+--- a/crates/tuigreet-config/src/schema.rs
++++ b/crates/tuigreet-config/src/schema.rs
+@@ -518,6 +518,10 @@ pub struct BackgroundConfig {
+   /// Parameters for the cmatrix-style digital rain effect.
+   #[serde(default)]
+   pub matrix: MatrixConfig,
++
++  /// Parameters for the Kanagawa wave effect.
++  #[serde(default)]
++  pub wave: WaveConfig,
+ }
+ 
+ /// Parameters for the DOOM-style fire animation. Field names mirror Ly's
+@@ -584,6 +588,56 @@ pub struct MatrixConfig {
+   pub mutate_chance: Option<f32>,
+ }
+ 
++/// Parameters for the Kanagawa wave animation. Local addition; see
++/// `system/tuigreet/README.md` in the dotfiles repo.
++#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
++pub struct WaveConfig {
++  /// Colour of the waterline. Accepts `#RRGGBB`, `0xRRGGBB`, or a colour name.
++  #[serde(default)]
++  pub crest_color: Option<String>,
++
++  /// Colour just below the surface.
++  #[serde(default)]
++  pub upper_color: Option<String>,
++
++  /// Colour of mid water.
++  #[serde(default)]
++  pub mid_color: Option<String>,
++
++  /// Colour of deep water.
++  #[serde(default)]
++  pub deep_color: Option<String>,
++
++  /// Colour of the darkest depths.
++  #[serde(default)]
++  pub abyss_color: Option<String>,
++
++  /// Colour of foam on steep crests.
++  #[serde(default)]
++  pub foam_color: Option<String>,
++
++  /// Resting waterline as a fraction of screen height, `0.0`-`1.0`.
++  #[serde(default)]
++  pub level: Option<f32>,
++
++  /// Multiplier on swell amplitude.
++  #[serde(default)]
++  pub amplitude: Option<f32>,
++
++  /// Multiplier on horizontal scroll speed.
++  #[serde(default)]
++  pub speed: Option<f32>,
++
++  /// Strength of the ported ColorMix warp texturing the water. `0.0` gives
++  /// flat depth bands.
++  #[serde(default)]
++  pub warp: Option<f32>,
++
++  /// Surface gradient above which a crest gets foam. Higher means less foam.
++  #[serde(default)]
++  pub foam_slope: Option<f32>,
++}
++
+ /// Greeting alignment options
+ #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq)]
+ #[serde(rename_all = "snake_case")]
+diff --git a/crates/tuigreet/src/greeter.rs b/crates/tuigreet/src/greeter.rs
+index f768fa4..df58dce 100644
+--- a/crates/tuigreet/src/greeter.rs
++++ b/crates/tuigreet/src/greeter.rs
+@@ -1156,7 +1156,7 @@ impl Greeter {
+     &mut self,
+     cfg: &tuigreet_config::BackgroundConfig,
+   ) {
+-    use crate::ui::bg_animation::{Kind, doom, matrix};
++    use crate::ui::bg_animation::{Kind, doom, matrix, wave};
+ 
+     let Some(kind) = cfg.kind.as_deref().and_then(Kind::from_name) else {
+       if let Some(name) = cfg.kind.as_deref()
+@@ -1204,6 +1204,22 @@ impl Greeter {
+           mutate_chance: cfg.matrix.mutate_chance.unwrap_or(d.mutate_chance),
+         })
+       },
++      Kind::Wave => {
++        let d = wave::Options::default();
++        AnimationSpec::Wave(wave::Options {
++          crest:      parse(&cfg.wave.crest_color, d.crest),
++          upper:      parse(&cfg.wave.upper_color, d.upper),
++          mid:        parse(&cfg.wave.mid_color, d.mid),
++          deep:       parse(&cfg.wave.deep_color, d.deep),
++          abyss:      parse(&cfg.wave.abyss_color, d.abyss),
++          foam:       parse(&cfg.wave.foam_color, d.foam),
++          level:      cfg.wave.level.unwrap_or(d.level),
++          amplitude:  cfg.wave.amplitude.unwrap_or(d.amplitude),
++          speed:      cfg.wave.speed.unwrap_or(d.speed),
++          warp:       cfg.wave.warp.unwrap_or(d.warp),
++          foam_slope: cfg.wave.foam_slope.unwrap_or(d.foam_slope),
++        })
++      },
+     };
+     self.animation = Some(bg_animation::build(&spec));
+     self.animation_fps = Some(cfg.fps.unwrap_or(ANIMATION_DEFAULT_FPS));
+diff --git a/crates/tuigreet/src/ui/bg_animation/mod.rs b/crates/tuigreet/src/ui/bg_animation/mod.rs
+index dff1af6..ddd4ea0 100644
+--- a/crates/tuigreet/src/ui/bg_animation/mod.rs
++++ b/crates/tuigreet/src/ui/bg_animation/mod.rs
+@@ -2,6 +2,7 @@
+ 
+ pub mod doom;
+ pub mod matrix;
++pub mod wave;
+ 
+ use std::str::FromStr;
+ 
+@@ -24,6 +25,7 @@ pub trait Animation: Send + Sync {
+ pub enum Kind {
+   Doom,
+   Matrix,
++  Wave,
+ }
+ 
+ /// Catalog entry for a registered animation kind.
+@@ -46,6 +48,11 @@ pub const KINDS: &[KindInfo] = &[
+     name:  "matrix",
+     label: "Matrix",
+   },
++  KindInfo {
++    kind:  Kind::Wave,
++    name:  "wave",
++    label: "Kanagawa Wave",
++  },
+ ];
+ 
+ impl Kind {
+@@ -54,6 +61,7 @@ impl Kind {
+     match name.trim().to_ascii_lowercase().as_str() {
+       "doom" | "fire" => Some(Self::Doom),
+       "matrix" | "cmatrix" => Some(Self::Matrix),
++      "wave" | "water" => Some(Self::Wave),
+       _ => None,
+     }
+   }
+@@ -64,6 +72,7 @@ impl Kind {
+ pub enum AnimationSpec {
+   Doom(doom::Options),
+   Matrix(matrix::Options),
++  Wave(wave::Options),
+ }
+ 
+ /// Construct an animation matching `spec`'s variant.
+@@ -71,6 +80,7 @@ pub fn build(spec: &AnimationSpec) -> Box<dyn Animation> {
+   match spec {
+     AnimationSpec::Doom(opts) => Box::new(doom::Doom::new(opts.clone())),
+     AnimationSpec::Matrix(opts) => Box::new(matrix::Matrix::new(opts.clone())),
++    AnimationSpec::Wave(opts) => Box::new(wave::Wave::new(opts.clone())),
+   }
+ }
+ 
+@@ -81,6 +91,7 @@ impl Kind {
+     match self {
+       Self::Doom => AnimationSpec::Doom(doom::Options::default()),
+       Self::Matrix => AnimationSpec::Matrix(matrix::Options::default()),
++      Self::Wave => AnimationSpec::Wave(wave::Options::default()),
+     }
+   }
+ }
