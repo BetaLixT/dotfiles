@@ -67,6 +67,13 @@ link_path $DIR/zed $HOME/.config/zed
 link_path $DIR/wallpapers $HOME/.config/wallpapers
 
 # ZSH config
+# oh-my-zsh is a dependency, not repo content: it is its own 16MB upstream clone.
+# .zshrc-lnx sources it, so clone it here too rather than relying on bootstrap.sh
+# having been run first -- this script has to stand on its own.
+if [ ! -d $HOME/.oh-my-zsh ]; then
+    git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git $HOME/.oh-my-zsh \
+        || echo "WARNING: oh-my-zsh clone failed; zsh will start without theme/plugins" >&2
+fi
 link_path $DIR/.zshrc-lnx $HOME/.zshrc
 
 # tmux config
