@@ -1,0 +1,102 @@
+* {
+  border: none;
+  border-radius: 0;
+  font-family: RobotoMono Nerd Font;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+window#waybar {
+  background-color: #16161D;
+  color: #C8C093;
+  transition-property: background-color;
+  transition-duration: 0.5s;
+  border-bottom: solid 0px #ff0000;
+}
+
+window#waybar.hidden {
+  opacity: 0.2;
+}
+
+#workspaces button {
+  padding: 0 5px;
+  color: #C8C093;
+  border-radius: 5px;
+}
+
+#workspaces button.focused {
+  background-color: #957FB8;
+  color: #16161D;
+  border-bottom: none;
+}
+
+#workspaces button.urgent {
+  background-color: #C34043;
+}
+
+widget > * {
+  margin-top: 3px;
+  margin-bottom: 3px;
+}
+
+.modules-left > widget > * {
+  margin-left: 600px;
+  margin-right: 12px;
+}
+
+.modules-left > widget:first-child > * {
+  margin-left: 6px;
+}
+
+.modules-left > widget:last-child > * {
+  margin-right: 18px;
+}
+
+.modules-right > widget > * {
+  padding: 0 12px;
+  margin-left: 0;
+  margin-right: 0;
+  color: #16161D;
+  background-color: #C8C093;
+}
+
+.modules-right > widget:first-child > * {
+  border-radius: 5px 0 0 5px;
+}
+
+.modules-right > widget:last-child > * {
+  border-radius: 0 5px 5px 0;
+  margin-right: 10px;
+}
+
+#mode {
+  background: transparent;
+  color: #ff0000;
+}
+
+@keyframes blink {
+  to {
+    color: #ff0000;
+  }
+}
+
+#battery.critical:not(.charging) {
+  animation-name: blink;
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+label:focus {
+  background-color: #ff0000;
+}
+
+tooltip {
+  border-radius: 5px;
+  background: #16161D;
+}
+
+tooltip label {
+  color: #C8C093;
+}

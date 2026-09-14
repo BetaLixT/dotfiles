@@ -111,6 +111,29 @@ link_path $DIR/bluetuith $HOME/.config/bluetuith
 mkdir -p $HOME/.config/btop/themes
 cp $DIR/btop/themes/kanagawa.theme $HOME/.config/btop/themes/
 
+# waybar. sway/config:317 sets `swaybar_command waybar`, so the bar depends on
+# this being present -- without it sway starts with no bar at all.
+#
+# Two variants: config-laptop has the battery and backlight modules,
+# config-desktop does not (a desktop has no BAT* device, and the backlight
+# scroll actions call `light`, which is not in packages/official.txt).
+# Detected from /sys/class/power_supply/BAT*; override with
+#   WAYBAR_PROFILE=desktop ./install-sway-arch.sh
+# Files are linked individually rather than linking the directory, so the same
+# style.css serves both variants.
+mkdir -p $HOME/.config/waybar
+if [ -n "${WAYBAR_PROFILE:-}" ]; then
+    _waybar_profile="$WAYBAR_PROFILE"
+elif compgen -G "/sys/class/power_supply/BAT*" > /dev/null; then
+    _waybar_profile=laptop
+else
+    _waybar_profile=desktop
+fi
+echo "waybar: using the ${_waybar_profile} config"
+ln -sf $DIR/waybar/config-${_waybar_profile} $HOME/.config/waybar/config
+ln -sf $DIR/waybar/style.css $HOME/.config/waybar/style.css
+unset _waybar_profile
+
 # swayosd
 mkdir -p $HOME/.config/swayosd
 ln -sf $DIR/swayosd/style.css $HOME/.config/swayosd/style.css

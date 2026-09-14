@@ -1,0 +1,64 @@
+// Waybar, DESKTOP variant.
+//
+// Identical to config-laptop except that the `battery` and `backlight` modules
+// are removed. Both are laptop-only: a desktop exposes no /sys/class/power_supply
+// BAT* device, and the backlight scroll actions call `light`, which is not in
+// packages/official.txt and would fail silently.
+//
+// install-sway-arch.sh picks between this and config-laptop by detecting a
+// battery, and symlinks the winner to ~/.config/waybar/config.
+// Override with:  WAYBAR_PROFILE=desktop|laptop ./install-sway-arch.sh
+{
+  "bar_id": "bar-0",
+  "ipc": true,
+  "modules-left": [
+    "sway/workspaces",
+    "sway/window",
+    "sway/mode"
+  ],
+  "modules-right": [
+    "pulseaudio",
+    "network",
+    "clock"
+  ],
+  "clock": {
+    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+    "format": "{:%b %d(%H:%M) 󰃰}"
+  },
+  "pulseaudio": {
+    "format": "{volume}% {icon} {format_source}",
+    "format-bluetooth": "{volume}% {icon} {format_source}",
+    "format-bluetooth-muted": "󰝟 {icon} {format_source}",
+    "format-muted": "󰝟 {format_source}",
+    "format-source": "{volume}% ",
+    "format-source-muted": "",
+    "format-icons": {
+      "headphone": "",
+      "hands-free": "󱠰",
+      "headset": "󰋎",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": [
+        "",
+        "",
+        ""
+      ]
+    },
+    "on-click": "pavucontrol"
+  },
+  "network": {
+    "format": "{ifname}",
+    "format-wifi": "Connected ",
+    "format-ethernet": "{ipaddr}/{cidr} 󰈀",
+    "format-disconnected": "Disconnected 󱛅",
+    "tooltip-format": "{ifname} via {gwaddr} 󰛳",
+    "tooltip-format-wifi": "{essid} ({signalStrength}%) ",
+    "tooltip-format-ethernet": "{ifname} ",
+    "tooltip-format-disconnected": "Disconnected",
+    "max-length": 50
+  },
+  "sway/workspaces": {
+    "disable-scroll": true
+  }
+}
