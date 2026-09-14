@@ -1,0 +1,4 @@
+# npm install -g, under the nvm-managed node. npm/corepack ship with node.
+bun
+pnpm
+backlog.md

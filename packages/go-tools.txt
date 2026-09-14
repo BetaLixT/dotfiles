@@ -1,0 +1,12 @@
+# go install <path>@latest
+github.com/go-delve/delve/cmd/dlv
+github.com/mailru/easyjson/easyjson
+golang.org/x/tools/gopls
+github.com/doitintl/kube-no-trouble/cmd/kubent
+google.golang.org/protobuf/cmd/protoc-gen-go
+google.golang.org/grpc/cmd/protoc-gen-go-grpc
+honnef.co/go/tools/cmd/staticcheck
+github.com/google/wire/cmd/wire
+github.com/BetaLixT/golang-tooling/handlergen
+github.com/BetaLixT/golang-tooling/protoc-gen-goblthttp
+github.com/BetaLixT/golang-tooling/protoc-gen-goconstrgen

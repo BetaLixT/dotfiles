@@ -1,0 +1,10 @@
+# Laptop / Intel-Iris-Xe specific. Skipped by bootstrap.sh --desktop.
+tlp
+brightnessctl
+intel-ucode
+intel-media-driver
+libva-intel-driver
+vulkan-intel
+iwd
+wireless_tools
+sof-firmware
