@@ -531,3 +531,59 @@ same upstream release, and both `.rasi` files parse against Fedora's build.
 **Not done:** nothing has been run on real Fedora hardware. Container testing
 covers package resolution and script logic; greetd, sway and the GPU path need
 a VM or a real install.
+
+## 17. One browser: Firefox only — 2026-10-06
+
+Brave, Edge and Zen removed from both bootstraps. Firefox is the only browser
+a new machine gets.
+
+**The question asked was whether something lighter could replace Firefox.
+It cannot**, and the reason is structural rather than a matter of picking a
+better project: full WebExtension support exists only on Gecko and Chromium.
+Every genuinely lighter browser drops it — qutebrowser has no WebExtension
+support at all, Pale Moon refuses it by design, Midori offers basic adblock
+only, and Falkon is the instructive case: it is *Chromium-based* and still has
+no WebExtension support, because the engine is not what provides it. Waterfox
+keeps extensions but is a Firefox fork on the same engine, so there is no
+memory win and a smaller security team.
+
+Between the two engines that do support extensions, Firefox is the lighter —
+it caps content processes at 8 while Chromium spawns a renderer per site
+origin (~3.8 GB vs ~6.5 GB at 50 tabs).
+
+**Zen benchmarks heavier than Firefox** (5424 MB vs 4755 MB) despite being a
+Firefox fork; the workspace UI costs memory. Given sections 1–2 (the OOM work,
+earlyoom, zram) that is the wrong direction, so dropping Zen is a small real
+memory win, not just a disk saving.
+
+**How it is enforced**
+
+* Arch: new `packages/aur-review.txt`, mirroring `official-review.txt`.
+  `aur.txt` stays a faithful `pacman -Qemq` snapshot, so regenerating it never
+  silently re-adds the browsers.
+* Fedora: the Brave and Edge repos are simply never added. The Microsoft prod
+  and vscode repos stay — powershell and `code` are not browsers.
+* Test 15 asserts no browser name reappears in either script.
+
+**What it costs, and the fix**
+
+Teams-in-Firefox cannot screen-share, and incoming calls divert to your phone.
+Microsoft discontinued its own Linux Teams client, so the choice is a
+dedicated Electron app or a second browser engine; the app is far smaller.
+Both bootstraps gained an **opt-in** `teams` phase using a new
+`want_explicit()` helper — it never runs in a default sweep:
+
+```sh
+./scripts/bootstrap-fedora.sh --laptop --only teams   # upstream x86_64 RPM
+./scripts/bootstrap.sh        --laptop --only teams   # teams-for-linux-bin
+```
+
+`IsmaelMartinez/teams-for-linux` v2.24.0 shipped 2026-10-03. Wayland screen
+sharing goes via the PipeWire portal (`xdg-desktop-portal-wlr` already
+present). Sharing a whole output is reliable; single-window sharing is still
+rough upstream.
+
+**Not decided here:** nothing was uninstalled from this laptop. These changes
+only affect what a *new* machine gets. Removing them here is
+`yay -Rns brave-bin microsoft-edge-stable-bin zen-browser-bin`, which is yours
+to run — and worth checking your Zen profile is exported first.

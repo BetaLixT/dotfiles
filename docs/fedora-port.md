@@ -125,6 +125,54 @@ One consequence worth knowing before switching:
 * **`terraform` is `opentofu`.** HashiCorp relicensed under the BSL, so Fedora
   ships the fork. Same HCL, different binary name.
 
+## One browser: Firefox
+
+Brave, Edge and Zen are deliberately **not** installed on either distro.
+The Arch side drops them via `packages/aur-review.txt`; the Fedora side never
+adds the Brave or Edge repos.
+
+The question was whether something lighter than Firefox could replace it. It
+cannot, and the reason is structural: **full WebExtension support exists only
+on Gecko and Chromium.** Everything genuinely lighter gives it up.
+
+| Browser | Engine | WebExtensions |
+|---|---|---|
+| qutebrowser | QtWebEngine | none (built-in adblock only) |
+| Falkon | QtWebEngine (Chromium) | none -- own legacy system, no modern API |
+| Pale Moon | Goanna | none, by design (legacy XUL) |
+| Midori | WebKitGTK | basic adblock only |
+| Waterfox | Gecko | yes -- but a Firefox fork, so no memory win |
+
+Falkon is the instructive case: it is Chromium-based and *still* has no
+WebExtension support, because the engine is not what provides it.
+
+Between the two engines that do, Firefox is the lighter: it caps content
+processes at 8 while Chromium spawns a renderer per site origin, which is
+roughly 3.8 GB vs 6.5 GB at 50 tabs. **Zen, despite being a Firefox fork,
+benchmarks heavier than Firefox itself** (5424 MB vs 4755 MB) -- the workspace
+UI costs memory. On the machine that prompted the earlyoom and zram work, that
+is the wrong direction, so dropping Zen is a small real win rather than just a
+disk saving.
+
+### What this costs: Teams
+
+Firefox cannot screen-share in Teams web, and incoming calls divert to your
+phone. Microsoft discontinued its own Linux Teams client, so the options are a
+dedicated Electron app or a second browser engine. The app is far smaller:
+
+```sh
+./scripts/bootstrap-fedora.sh --laptop --only teams   # Fedora: upstream RPM
+./scripts/bootstrap.sh        --laptop --only teams   # Arch:   teams-for-linux-bin
+```
+
+`IsmaelMartinez/teams-for-linux` is actively maintained (v2.24.0, 3 Oct 2026)
+and ships an x86_64 RPM. Wayland screen sharing goes through the PipeWire
+portal, and `xdg-desktop-portal-wlr` is already in the package list. Sharing a
+whole output is reliable; sharing a single window is still rough upstream.
+
+Both `teams` phases are **opt-in**: they use `want_explicit`, so they never run
+in a default sweep and only fire when named by `--only teams`.
+
 ## rofi is Wayland-native — `rofi-wayland` is obsolete on both distros
 
 There is no `rofi-wayland` package on Fedora, and that is **not** a gap. The

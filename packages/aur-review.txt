@@ -1,0 +1,25 @@
+# AUR packages installed on this machine but NOT wanted on a new one.
+# bootstrap.sh skips these and prints a reminder. Mirrors the role of
+# packages/official-review.txt.
+#
+# aur.txt is a SNAPSHOT (`pacman -Qemq`), so it keeps listing whatever is
+# installed here. This file is the editorial layer on top of it -- that way
+# regenerating aur.txt never silently re-adds something that was dropped on
+# purpose.
+#
+# Browsers. Firefox is the only browser a new machine gets.
+#
+# Rationale: full WebExtension support exists only on Gecko and Chromium, and
+# of those two Firefox is the lighter -- it caps content processes at 8 while
+# Chromium spawns one per site origin (~3.8GB vs ~6.5GB at 50 tabs). Every
+# genuinely lighter browser (qutebrowser, Falkon, Pale Moon, Midori) drops
+# WebExtensions entirely. Zen is a Firefox fork and benchmarks HEAVIER than
+# Firefox itself (5424MB vs 4755MB), so it costs memory for UI, which is a bad
+# trade on the machine that prompted the earlyoom work.
+#
+# Cost: Teams-in-Firefox cannot screen-share and diverts incoming calls to
+# your phone. Restore that with the dedicated client, not a second browser:
+#     ./scripts/bootstrap.sh --laptop --only teams
+brave-bin
+microsoft-edge-stable-bin
+zen-browser-bin

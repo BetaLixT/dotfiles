@@ -10,6 +10,7 @@
 #   ./scripts/bootstrap.sh --laptop           # everything, as on the original machine
 #   ./scripts/bootstrap.sh --desktop --dry-run
 #   ./scripts/bootstrap.sh --laptop --only aur,go
+#   ./scripts/bootstrap.sh --laptop --only teams    # opt-in, never runs by default
 #
 # Idempotent: pacman/yay use --needed, and every other phase checks before acting.
 # Safe to re-run.
@@ -17,6 +18,9 @@
 # Package lists live in packages/ so they can be regenerated:
 #   pacman -Qenq | sort > packages/official.txt
 #   pacman -Qemq | sort > packages/aur.txt
+#
+# Regenerating is safe: packages/aur-review.txt is the editorial layer, so
+# anything deliberately dropped (the extra browsers) stays dropped.
 
 set -euo pipefail
 
@@ -66,6 +70,12 @@ want() {
 
 # Read a list file, dropping comments and blanks.
 list() { grep -vE '^\s*(#|$)' "$1" 2>/dev/null || true; }
+
+# Like want(), but never runs in a default sweep -- only when named by --only.
+want_explicit() {
+    [ -n "$ONLY" ] || return 1
+    case ",$ONLY," in *",$1,"*) return 0 ;; *) return 1 ;; esac
+}
 
 # ---------------------------------------------------------------- preflight --
 say "Preflight"
@@ -125,8 +135,16 @@ if want aur; then
         fi
     fi
 
-    mapfile -t AUR < <(list "$PKG/aur.txt" | grep -v -- '-debug$')
-    info "${#AUR[@]} AUR packages (debug symbol packages excluded)"
+    mapfile -t AUR_ALL < <(list "$PKG/aur.txt" | grep -v -- '-debug$')
+    mapfile -t AUR_SKIP < <(list "$PKG/aur-review.txt")
+    AUR=()
+    for p in "${AUR_ALL[@]}"; do
+        skip=0
+        for s in "${AUR_SKIP[@]:-}"; do [ "$p" = "$s" ] && { skip=1; break; }; done
+        [ "$skip" = 0 ] && AUR+=("$p")
+    done
+    info "${#AUR_ALL[@]} listed, ${#AUR_SKIP[@]} skipped by aur-review.txt, ${#AUR[@]} to install"
+    [ "${#AUR_SKIP[@]}" -gt 0 ] && info "skipped: ${AUR_SKIP[*]}"
     run yay -S --needed --noconfirm "${AUR[@]}" || { warn "some AUR builds failed"; FAILED+=("aur"); }
 fi
 
@@ -194,6 +212,24 @@ if want npm; then
         run npm install -g "${NPMPKGS[@]}" || { warn "npm global install failed"; FAILED+=("npm"); }
     else
         warn "npm not found; skipping"
+    fi
+fi
+
+# ----------------------------------------------------------------- teams ----
+if want_explicit teams; then
+    say "Microsoft Teams (opt-in)"
+    # Only reachable via `--only teams`. Firefox is the only browser installed,
+    # and Teams-in-Firefox cannot screen-share, so this is the replacement for
+    # keeping Edge around purely for Teams. See packages/aur-review.txt.
+    # -bin, consistent with brave-bin/zen-browser-bin/herdr-bin and with the
+    # Fedora side (which installs the upstream RPM). The source package
+    # `teams-for-linux` also exists but lags: 2.20.1 vs 2.23.0 at time of
+    # writing, and it rebuilds Electron.
+    if pacman -Qq teams-for-linux-bin >/dev/null 2>&1 || pacman -Qq teams-for-linux >/dev/null 2>&1; then
+        info "teams-for-linux already installed"
+    else
+        run yay -S --needed --noconfirm teams-for-linux-bin \
+            || { warn "teams-for-linux-bin install failed"; FAILED+=("teams"); }
     fi
 fi
 

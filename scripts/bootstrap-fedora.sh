@@ -11,7 +11,7 @@
 #   ./scripts/bootstrap-fedora.sh --laptop --only copr,dotnet
 #
 # Phases, in order:
-#   repos    RPM Fusion + Microsoft/Brave/Resilio/Docker repo definitions
+#   repos    RPM Fusion + Microsoft/Resilio/Docker repo definitions
 #   dnf      packages/fedora.txt, minus the profile/review skips
 #   copr     packages/fedora-copr.txt (Fedora's AUR analogue)
 #   flatpak  Flathub apps that have no sane RPM
@@ -20,6 +20,7 @@
 #   npm      packages/npm-global.txt under nvm, or system node
 #   cargo    crates with no Fedora package
 #   bin      tarball-only binaries (ngrok)
+#   teams    teams-for-linux -- OPT-IN, only via --only teams
 #   shell    oh-my-zsh, tmux TPM
 #
 # Idempotent: dnf uses `install --skip-installed`-equivalent semantics via
@@ -80,6 +81,13 @@ want() {
 
 list() { grep -vE '^\s*(#|$)' "$1" 2>/dev/null || true; }
 
+# Like want(), but never runs in a default sweep -- only when named by --only.
+# For phases that install something opinionated the base setup leaves out.
+want_explicit() {
+    [ -n "$ONLY" ] || return 1
+    case ",$ONLY," in *",$1,"*) return 0 ;; *) return 1 ;; esac
+}
+
 # ---------------------------------------------------------------- preflight --
 say "Preflight"
 [ -f /etc/fedora-release ] || { echo "This script is Fedora-specific. On Arch use scripts/bootstrap.sh." >&2; exit 1; }
@@ -124,6 +132,9 @@ if want repos; then
         run sudo dnf install -y dnf-plugins-core
     fi
 
+    # Deliberately NOT here: Brave and Microsoft Edge. Firefox is the only
+    # browser this setup installs -- see the "One browser" note in
+    # docs/fedora-port.md for the reasoning and what it costs (Teams).
     info "RPM Fusion (free + nonfree) -- codecs and the nonfree driver path"
     run sudo dnf install -y \
         "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA_VER}.noarch.rpm" \
@@ -150,20 +161,6 @@ gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
     fi
 
-    info "Microsoft: Edge (its own repo, separate from prod)"
-    if [ "$DRY_RUN" = 1 ]; then
-        printf '    [dry-run] write /etc/yum.repos.d/microsoft-edge.repo\n'
-    else
-        sudo tee /etc/yum.repos.d/microsoft-edge.repo >/dev/null <<'EOF'
-[microsoft-edge]
-name=microsoft-edge
-baseurl=https://packages.microsoft.com/yumrepos/edge
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-EOF
-    fi
-
     info "Microsoft: VS Code (a third MS repo, separate again)"
     if [ "$DRY_RUN" = 1 ]; then
         printf '    [dry-run] write /etc/yum.repos.d/vscode.repo\n'
@@ -177,11 +174,6 @@ gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
     fi
-
-    info "Brave"
-    run sudo rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc || true
-    add_repofile https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo \
-        || { warn "brave repo failed"; FAILED+=("repos:brave"); }
 
     info "Resilio Sync"
     run sudo rpm --import https://linux-packages.resilio.com/resilio-sync/key.asc || true
@@ -236,7 +228,7 @@ if want dnf; then
     # Third-party-repo packages, kept out of fedora.txt so that list stays
     # resolvable against a stock Fedora mirror (which is what the test harness
     # checks). These need the repos phase to have run.
-    THIRDPARTY=(brave-browser microsoft-edge-stable powershell code resilio-sync
+    THIRDPARTY=(powershell code resilio-sync
                 docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)
     info "third-party-repo packages: ${THIRDPARTY[*]}"
     run sudo dnf install -y "${THIRDPARTY[@]}" || { warn "some third-party packages failed"; FAILED+=("dnf:thirdparty"); }
@@ -269,11 +261,10 @@ if want flatpak; then
     say "Flatpak"
     if command -v flatpak >/dev/null; then
         run flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-        # Zen and Postman have no maintained Fedora RPM; on Arch these came
-        # from the AUR as -bin packages, which is the same bargain.
+        # Postman, DBeaver and Zed have no maintained Fedora RPM; on Arch
+        # these came from the AUR as -bin packages, which is the same bargain.
         run flatpak install -y flathub \
             it.mijorus.gearlever \
-            app.zen_browser.zen \
             com.getpostman.Postman \
             io.dbeaver.DBeaverCommunity \
             dev.zed.Zed \
@@ -403,6 +394,42 @@ if want bin; then
     fi
 fi
 
+# ----------------------------------------------------------------- teams ----
+if want_explicit teams; then
+    say "Microsoft Teams (opt-in)"
+    # Only reachable via `--only teams`; a default run installs no Teams client.
+    #
+    # This exists because Firefox is the only browser this setup installs, and
+    # Teams-in-Firefox cannot screen-share (incoming calls also divert to your
+    # phone). Microsoft discontinued its own Linux Teams client, so the choice
+    # is a dedicated ~200MB Electron app or a whole second browser engine. The
+    # app is the smaller of the two.
+    #
+    # IsmaelMartinez/teams-for-linux is actively maintained (v2.24.0, Oct 2026)
+    # and ships an x86_64 RPM. Wayland screen sharing goes through the PipeWire
+    # portal -- xdg-desktop-portal-wlr is already in packages/fedora.txt.
+    # Sharing a single window is still rough upstream; sharing a whole output
+    # is the reliable path.
+    if rpm -q teams-for-linux >/dev/null 2>&1; then
+        info "teams-for-linux already installed"
+    elif [ "$DRY_RUN" = 1 ]; then
+        printf '    [dry-run] resolve + install latest teams-for-linux x86_64 rpm from GitHub\n'
+    else
+        info "resolving the latest release from GitHub"
+        TFL_URL=$(curl -fsSL https://api.github.com/repos/IsmaelMartinez/teams-for-linux/releases/latest \
+            | grep -o '"browser_download_url": *"[^"]*\.x86_64\.rpm"' \
+            | head -1 | sed 's/.*"\(https[^"]*\)"/\1/')
+        if [ -n "$TFL_URL" ]; then
+            info "${TFL_URL##*/}"
+            run sudo dnf install -y "$TFL_URL" \
+                || { warn "teams-for-linux install failed"; FAILED+=("teams"); }
+        else
+            warn "could not find an x86_64 rpm in the latest release"
+            FAILED+=("teams")
+        fi
+    fi
+fi
+
 # ------------------------------------------------------------ shell extras --
 if want shell; then
     say "Shell and tmux extras"
@@ -432,6 +459,14 @@ cat <<'NEXT'
 
     (Despite the name it now runs on both distros: it is mostly symlinks, and
     the few package guards inside it go through a pacman/dnf shim.)
+
+    Browsers: Firefox only. Brave, Edge and Zen are deliberately not
+    installed. The one thing this costs is Microsoft Teams: Firefox cannot
+    screen-share in Teams web, and incoming calls divert to your phone. If
+    you need that back, install the dedicated client rather than a whole
+    second browser:
+
+        ./scripts/bootstrap-fedora.sh --laptop --only teams
 
     Not handled by this script, by design -- see docs/fedora-port.md:
       * herdr        -- install from https://herdr.dev

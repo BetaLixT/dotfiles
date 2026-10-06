@@ -154,7 +154,7 @@ su - tester -c "cd ~/dotfiles && ./scripts/bootstrap-fedora.sh --laptop --dry-ru
 
 echo
 echo "--- 7. phase filters"
-for ph in repos dnf copr flatpak dotnet go npm cargo bin shell; do
+for ph in repos dnf copr flatpak dotnet go npm cargo bin teams shell; do
     if su - tester -c "cd ~/dotfiles && ./scripts/bootstrap-fedora.sh --desktop --dry-run --only $ph" >/dev/null 2>&1; then
         echo "    --only $ph: ok"
     else
@@ -250,6 +250,41 @@ if rofi -dump-config >/dev/null 2>/tmp/cf.err; then
 else
     echo "    PROBLEM: config.rasi failed to parse"; sed "s/^/            /" /tmp/cf.err
 fi
+
+echo
+echo "--- 15. Firefox is the only browser, and the teams phase is opt-in"
+for b in brave-browser microsoft-edge-stable app.zen_browser.zen chromium google-chrome; do
+    if grep -q "$b" /home/tester/dotfiles/scripts/bootstrap-fedora.sh; then
+        echo "    PROBLEM: $b is still referenced"
+    else
+        echo "    ok      no $b"
+    fi
+done
+grep -qx "firefox" /home/tester/dotfiles/packages/fedora.txt \
+    && echo "    ok      firefox is in fedora.txt" \
+    || echo "    PROBLEM: firefox missing"
+# A default sweep must not pull in Teams; only --only teams may.
+if su - tester -c "cd ~/dotfiles && ./scripts/bootstrap-fedora.sh --laptop --dry-run" 2>&1 | grep -q "==> Microsoft Teams"; then
+    echo "    PROBLEM: teams phase ran in a default sweep"
+else
+    echo "    ok      teams phase skipped by default"
+fi
+if su - tester -c "cd ~/dotfiles && ./scripts/bootstrap-fedora.sh --laptop --dry-run --only teams" 2>&1 | grep -q "==> Microsoft Teams"; then
+    echo "    ok      --only teams reaches the phase"
+else
+    echo "    PROBLEM: --only teams did not run the phase"
+fi
+# and the release really does publish an x86_64 rpm, which the phase greps for
+# Read into a variable rather than piping to `grep -q`: grep exits on the
+# first match, curl takes SIGPIPE and prints "Failed writing body".
+# (No single quotes in this block -- the whole inner script is single-quoted.)
+TFL_JSON=$(curl -fsSL https://api.github.com/repos/IsmaelMartinez/teams-for-linux/releases/latest || true)
+TFL_TAG=$(printf "%s" "$TFL_JSON" | grep -o "\"tag_name\": *\"[^\"]*\"" | head -1 | sed "s/.*: *\"//;s/\"//")
+case "$TFL_JSON" in
+    *browser_download_url*x86_64.rpm*)
+        echo "    ok      upstream publishes an x86_64 rpm (${TFL_TAG:-unknown})" ;;
+    *)  echo "    PROBLEM: no x86_64 rpm in the latest release" ;;
+esac
 
 echo
 echo "--- 10. .NET channel is installable and overridable"
