@@ -166,7 +166,7 @@ require("lazy").setup({
 require("nvim-treesitter").install({
     "c", "lua", "vim", "vimdoc", "query",
     "javascript", "typescript", "go", "dockerfile",
-    "python", "rust", "zig", "c_sharp", "razor",
+    "python", "rust", "zig", "c_sharp", "razor", "yaml", "json",
 })
 
 -- No pattern filter: pcall means any buffer with an available parser gets

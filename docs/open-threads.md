@@ -396,3 +396,138 @@ swapfile script greps before appending to fstab, package installs are guarded by
 `pacman -Qq`, and the yazi `git clone` is swallowed by `|| true`. Two operations
 do repeat harmlessly: `systemctl restart systemd-journald` and
 `restart earlyoom` (the latter briefly gaps OOM protection).
+
+## 14. Flashing monitor on the small HDMI dock — SOLVED 2026-09-25
+
+**Symptom:** the Samsung LS24DG30X (1920x1080, on the small HDMI dock, enumerates
+as `DP-1`) flashes intermittently.
+
+**Cause:** it was running at **180Hz**, which that dock cannot carry. 1080p@180
+needs roughly a 370-400MHz pixel clock - inside HDMI 2.0's 594MHz but well past
+HDMI 1.4's 340MHz. The monitor's EDID advertises 180 and the adapter passes that
+claim through unchanged, so sway picks the highest mode offered and the link then
+fails to sustain it.
+
+**Fix:** pin 120Hz. In `sway/config`:
+
+    output $mon_hdmi mode 1920x1080@120Hz pos 1520 1440
+
+Advertised rates are 180, 120, 119.9, 60, 59.9, 50. If 120 ever proves marginal,
+60 is comfortably inside HDMI 1.4.
+
+**Why this was hard to find:** nothing logs it. sway presents frames normally and
+the kernel reports no link-training or DRM errors, because the fault is in the
+physical link, below both. The only evidence is visual.
+
+**MISDIAGNOSIS WORTH REMEMBERING.** This was first blamed on the page-flip
+failures in section 15, because those were dramatic and concurrent. They are on
+different displays entirely:
+
+    eDP-1   1803 failures     laptop panel
+    DP-4     283              Samsung 4K, CalDigit dock
+    DP-3     131              Samsung 4K, CalDigit dock
+    DP-1       4              <- the display that was actually flashing
+
+Four failures. The flashing display was almost perfectly clean in the log the
+whole time. A dramatic signal that correlates in time is not necessarily the
+signal for the symptom being reported - check that the evidence names the thing
+being complained about before building on it.
+
+## 15. Page-flip failures on eDP-1 and the CalDigit Samsungs — UNRESOLVED
+
+Separate from section 14 and still unexplained. sway logs a continuous stream of:
+
+    connector DP-4: Atomic commit failed: Device or resource busy
+    Page-flip failed on output DP-4
+
+Affects the laptop panel and the two 4K Samsungs behind the CalDigit TS3 Plus.
+Bursty; hourly counts have ranged 4 to 942. Bursts begin within a second of the
+dock being attached (kernel logs its card reader enumerating at the same moment).
+
+**No known user-visible symptom.** It was assumed to be the cause of the flashing
+in section 14 and was not.
+
+**Ruled out:**
+- Not the GPU - the kernel logs zero i915 errors, only normal resume reinit.
+- Not accumulated compositor state - reproduces on fresh sway sessions.
+- Not suspend/resume - one instance began 22 seconds into a session.
+- Not the 180Hz monitor's bandwidth, and not fractional scaling: three 90s
+  windows (baseline 7, DP-1 disabled 38, integer scale 2 = 73) showed no
+  improvement from either. Those samples are too few and too noisy to prove
+  anything beyond the absence of a large effect - each change also forces a
+  modeset, which bursts.
+
+**Untested:** whether moving a Samsung off the CalDigit to a direct port changes
+anything. The kernel flagged a device at half its possible PCIe width at boot
+(7.876 Gb/s on an x1 link, capable of x2).
+
+Check the current rate with:
+
+    journalctl -t sway --since "-5min" | grep -c "Page-flip failed"
+
+## 16. Fedora port — DONE 2026-10-06, validated in a container
+
+Goal: reproduce this sway setup on Fedora, so a second machine is not locked
+to Arch. Full write-up in `docs/fedora-port.md`; this is the short version.
+
+**What was added**
+
+* `scripts/bootstrap-fedora.sh` — ten phases: repos, dnf, copr, flatpak,
+  dotnet, go, npm, cargo, bin, shell. Same `--desktop`/`--laptop`/`--dry-run`/
+  `--only` contract as the Arch one.
+* `scripts/test-bootstrap-fedora.sh` — twelve checks, container-based.
+* `packages/fedora.txt` (126), `fedora-laptop-only.txt` (7),
+  `fedora-review.txt`, `fedora-copr.txt` (4 projects).
+* `install-sway-arch.sh` now runs on both distros via a `pkg_need` /
+  `pkg_installed` shim. **The Arch branch emits byte-identical commands**, so
+  running it on this laptop is unchanged.
+
+**Four things the testing caught that guesswork would not have**
+
+1. `packages.microsoft.com/fedora/<ver>/prod` is a *decoy*. It exists, it
+   returns a valid `repomd.xml` for every Fedora release, and it contains
+   neither powershell nor edge — only mdatp/procmon/sysinternals. PowerShell
+   is in `rhel/9/prod`, Edge in `yumrepos/edge`, VS Code in `yumrepos/vscode`.
+   Three separate Microsoft repos.
+2. **ngrok has no RPM repository at all.** Its S3 bucket holds `dists/` and
+   `pool/` — Debian only. Installed from the tarball in the `bin` phase.
+3. Diffing `official.txt` against `fedora.txt` found ~20 packages I had simply
+   missed, including things `scripts/options-menu.sh` calls directly
+   (`wdisplays`, `rofimoji`, `cliphist`, `wf-recorder`, `hyprpicker`,
+   `pulsemixer`, `yazi`). Mapping the obvious packages was not the same as
+   reproducing the desktop.
+4. `vim` → `vim-enhanced` was applied with a substring replace that hit the
+   `vim` inside `neovim`, silently producing `neovim-enhanced`. Only the
+   container re-run caught it. Line-exact matching when editing package lists.
+5. `dnf list <pkg>` glob-matches and ignores case, so it happily "resolved"
+   `imagemagick` against the real package `ImageMagick` — a name `dnf install`
+   would have rejected. Switching the test to one exact
+   `dnf repoquery --qf '%{name}\n'` over all names caught it, and cut test 1
+   from 126 dnf invocations to one.
+6. `dnf --version | head -1 | grep` under `set -o pipefail` is a race: `head`
+   closes the pipe, dnf dies on SIGPIPE, the pipeline "fails", and the script
+   silently decided it was on dnf4 — which would have used the wrong
+   `config-manager` syntax on a real Fedora 41+ box. The same container
+   reported 5 on one run and 4 on the next. Test 13 now asserts stability
+   over 8 runs.
+
+**Two Fedora facts that were expected to break and did not:** earlyoom really
+does read `/etc/default/earlyoom` on Fedora (not `/etc/sysconfig`), and
+zram-generator uses the same `/etc/systemd/zram-generator.conf` path.
+
+**Known gaps, documented not fixed:** `terraform` is `opentofu`; and
+`ueberzugpp`,
+`swayosd`, `recordmydesktop`, `networkmanager-dmenu`, `hyprpicker`, `nvm`,
+herdr and the hand-dropped binaries have no Fedora packaging.
+
+**Corrected after the first write-up:** I claimed rofi would run under
+Xwayland on Fedora because there is no `rofi-wayland` package. Wrong, and I
+asserted it without checking the binary. rofi 2.0 merged the lbonn Wayland
+fork upstream; Fedora's changelog reads "Enable Wayland backend and replace
+rofi-wayland", and `rofi -help` lists a wayland backend. Arch did the same --
+`rofi-wayland` there is now `rofi 2.0.0-1` via provides. Both distros run the
+same upstream release, and both `.rasi` files parse against Fedora's build.
+
+**Not done:** nothing has been run on real Fedora hardware. Container testing
+covers package resolution and script logic; greetd, sway and the GPU path need
+a VM or a real install.

@@ -51,6 +51,52 @@ EOT
     ln -sfn "$src" "$dest"
 }
 
+# ---------------------------------------------------------------------------
+# Distro shim.
+#
+# This script is mostly symlinks, which are distro-neutral, but a handful of
+# steps install a package before deploying its config. Those were pacman-only
+# and hard-failed on Fedora (`pacman: command not found`, then `set -e`), so
+# they go through these two helpers instead.
+#
+# Package installation at scale is NOT this script's job -- that is
+# scripts/bootstrap.sh (Arch) and scripts/bootstrap-fedora.sh (Fedora). These
+# guards only cover the few packages whose config is written right here, so
+# that running this script alone on a near-stock machine still works.
+#
+# Only two names actually differ between the distros:
+#   greetd-tuigreet (Arch) == tuigreet       (Fedora)
+#   openssh         (Arch) == openssh-server (Fedora)
+# Everything else -- and notably /etc/default/earlyoom and
+# /etc/systemd/zram-generator.conf -- is identical on both.
+if command -v pacman >/dev/null 2>&1; then
+    DISTRO=arch
+elif command -v dnf >/dev/null 2>&1; then
+    DISTRO=fedora
+else
+    DISTRO=unknown
+fi
+
+# pkg_installed <arch-name> [fedora-name]
+pkg_installed() {
+    case "$DISTRO" in
+        arch)   pacman -Qq "$1" >/dev/null 2>&1 ;;
+        fedora) rpm -q "${2:-$1}" >/dev/null 2>&1 ;;
+        *)      return 1 ;;
+    esac
+}
+
+# pkg_need <arch-name> [fedora-name] -- install only if missing
+pkg_need() {
+    pkg_installed "$@" && return 0
+    case "$DISTRO" in
+        arch)   sudo pacman -S --needed --noconfirm "$1" ;;
+        fedora) sudo dnf install -y "${2:-$1}" ;;
+        *)      echo "WARNING: cannot install '$1' on this distro; install it by hand" >&2
+                return 1 ;;
+    esac
+}
+
 DIR="$(dirname "$(readlink -f "$0")")"
 cd $DIR
 
@@ -85,7 +131,9 @@ link_path $DIR/alacritty-lnx $HOME/.config/alacritty
 # sway
 link_path $DIR/sway $HOME/.config/sway
 
-# swaync (notification daemon; replaced mako — needs: sudo pacman -S swaync)
+# swaync (notification daemon; replaced mako)
+#   Arch:   sudo pacman -S swaync
+#   Fedora: sudo dnf install SwayNotificationCenter   (different package name)
 link_path $DIR/swaync $HOME/.config/swaync
 
 # mako (kept as fallback notification daemon config)
@@ -157,11 +205,18 @@ mkdir -p $HOME/.config/xdg-desktop-portal
 ln -sf $DIR/xdg-desktop-portal-termfilechooser/config $HOME/.config/xdg-desktop-portal-termfilechooser/config
 ln -sf $DIR/xdg-desktop-portal/portals.conf $HOME/.config/xdg-desktop-portal/portals.conf
 
-# Zen browser (user.js for GPU stability)
-ZEN_PROFILE=$(find $HOME/.zen -maxdepth 1 -type d -name "*.Default*" | head -1)
-if [ -n "$ZEN_PROFILE" ]; then
-    ln -sf $DIR/zen/user.js "$ZEN_PROFILE/user.js"
-fi
+# Zen browser user.js.
+#
+# Linked into EVERY real profile, not just one. The previous version globbed for
+# "*.Default*", which silently missed the actual active profile
+# (refenxnj.moh-kwi) -- so every pref set through this repo went nowhere for
+# months. A profile is any directory containing prefs.js or times.json.
+find $HOME/.zen -maxdepth 1 -mindepth 1 -type d 2>/dev/null | while read -r prof; do
+    if [ -f "$prof/prefs.js" ] || [ -f "$prof/times.json" ]; then
+        ln -sf $DIR/zen/user.js "$prof/user.js"
+        echo "zen: linked user.js into $(basename "$prof")"
+    fi
+done
 
 # Session-wide environment. These used to be exported from .zshrc-lnx, which
 # only worked while sway was launched from an interactive zsh. greetd execs the
@@ -181,16 +236,48 @@ ln -sf $DIR/scripts/start-sway.sh $HOME/.local/bin/start-sway
 # the home copy can never resolve. /usr/local/bin is on the default PATH.
 sudo install -Dm755 $DIR/scripts/start-sway.sh /usr/local/bin/start-sway
 
-# herdr (terminal multiplexer for coding agents; AUR: yay -S herdr-bin)
+# herdr (terminal multiplexer for coding agents)
+#   Arch:   yay -S herdr-bin
+#   Fedora: no package; install from https://herdr.dev
 # NOTE: link the file, not the directory -- ~/.config/herdr also holds herdr.sock,
 # session.json and logs, which must stay local and out of the repo.
 mkdir -p $HOME/.config/herdr
 ln -sf $DIR/herdr/config.toml $HOME/.config/herdr/config.toml
 
+# Homelab CA (step-ca at pca.betalixt.intra). Three stores need it separately:
+#
+#   system     here, via update-ca-trust -- covers curl, openssl, git, CLI tools
+#   firefox    NOT the system store; zen/user.js sets
+#              security.enterprise_roots.enabled so it reads the system store
+#   chromium   Brave/Edge use the shared NSS db at ~/.pki/nssdb, below
+#
+# See system/ca-certificates/README.md for the fingerprint and how to refresh.
+sudo install -Dm644 $DIR/system/ca-certificates/betalixt-root.crt \
+    /etc/ca-certificates/trust-source/anchors/betalixt-root.crt
+sudo update-ca-trust
+
+# Chromium-family browsers need an explicit import; -D first so re-runs do not
+# fail on a duplicate nickname.
+if command -v certutil > /dev/null 2>&1; then
+    mkdir -p $HOME/.pki/nssdb
+    [ -f $HOME/.pki/nssdb/cert9.db ] || certutil -d sql:$HOME/.pki/nssdb -N --empty-password
+    certutil -d sql:$HOME/.pki/nssdb -D -n "Betalixt CA Root" 2>/dev/null || true
+    certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "Betalixt CA Root" \
+        -i $DIR/system/ca-certificates/betalixt-root.crt \
+        && echo "chromium/brave/edge: imported Betalixt CA Root into ~/.pki/nssdb"
+fi
+
 # System configs (require sudo)
 sudo cp $DIR/system/sysctl.d/99-sysrq.conf /etc/sysctl.d/99-sysrq.conf
 sudo cp $DIR/system/sysctl.d/99-memory-pressure.conf /etc/sysctl.d/99-memory-pressure.conf
 sudo sysctl --system > /dev/null 2>&1
+
+# Lid behaviour: stay awake on AC (sway blanks the panel via bindswitch),
+# suspend on battery. NOT restarted here on purpose — logind does not reliably
+# reload this, and restarting systemd-logind can disrupt or kill live sessions.
+# Takes effect at the next boot.
+sudo mkdir -p /etc/systemd/logind.conf.d
+sudo cp $DIR/system/logind.conf.d/10-lid.conf /etc/systemd/logind.conf.d/10-lid.conf
 
 sudo mkdir -p /etc/systemd/journald.conf.d
 sudo cp $DIR/system/journald.conf.d/00-persistent.conf /etc/systemd/journald.conf.d/00-persistent.conf
@@ -198,11 +285,11 @@ sudo systemctl restart systemd-journald
 
 # zram - tier-1 compressed-RAM swap at priority 100. Must exist before the
 # swapfile below is meaningful; the two-tier design depends on it.
-pacman -Qq zram-generator > /dev/null 2>&1 || sudo pacman -S --needed --noconfirm zram-generator
+pkg_need zram-generator
 sudo cp $DIR/system/systemd/zram-generator.conf /etc/systemd/zram-generator.conf
 
 # earlyoom - userspace OOM killer, kills a runaway before the desktop stalls
-pacman -Qq earlyoom > /dev/null 2>&1 || sudo pacman -S --needed --noconfirm earlyoom
+pkg_need earlyoom
 sudo cp $DIR/system/default/earlyoom /etc/default/earlyoom
 
 # Disk swapfile behind zram (btrfs-aware; idempotent, safe to re-run)
@@ -245,9 +332,9 @@ fi
 #
 # ly is deliberately left installed and its config still deployed, so
 # `systemctl enable ly@tty2` is a one-command fallback if greetd misbehaves.
-pacman -Qq greetd > /dev/null 2>&1 || sudo pacman -S --needed --noconfirm greetd
-pacman -Qq greetd-tuigreet > /dev/null 2>&1 || sudo pacman -S --needed --noconfirm greetd-tuigreet
-pacman -Qq cage > /dev/null 2>&1 || sudo pacman -S --needed --noconfirm cage
+pkg_need greetd
+pkg_need greetd-tuigreet tuigreet
+pkg_need cage
 
 sudo mkdir -p /etc/greetd /etc/tuigreet
 # The greeter wrapper: prefers the locally built tuigreet (which adds the `wave`
@@ -297,13 +384,13 @@ sudo chmod 0755 /var/cache/tuigreet
 #
 # See docs/tuigreet-wave.md for the update workflow and the version pin.
 if [ "${SKIP_TUIGREET_BUILD:-0}" != 1 ]; then
-    pacman -Qq rust > /dev/null 2>&1 || sudo pacman -S --needed --noconfirm rust
+    pkg_need rust
     $DIR/system/tuigreet/build.sh || \
         echo "WARNING: custom tuigreet build failed; the greeter falls back to the packaged binary (no 'wave' animation). See docs/tuigreet-wave.md." >&2
 fi
 
 # ly config still deployed as the fallback path (package already installed)
-if pacman -Qq ly > /dev/null 2>&1; then
+if pkg_installed ly; then
     sudo cp $DIR/system/ly/config.ini /etc/ly/config.ini
     sudo mkdir -p /etc/ly/custom-sessions
     sudo cp $DIR/system/ly/custom-sessions/sway-logged.desktop /etc/ly/custom-sessions/
@@ -316,7 +403,7 @@ sudo systemctl enable greetd.service
 # Services
 # sshd is the escape hatch for diagnosing a freeze from another machine, so the
 # package guard matters here -- enabling a unit that isn't installed just fails.
-pacman -Qq openssh > /dev/null 2>&1 || sudo pacman -S --needed --noconfirm openssh
+pkg_need openssh openssh-server
 sudo systemctl enable --now sshd
 sudo systemctl enable --now earlyoom
 sudo systemctl restart earlyoom   # pick up /etc/default/earlyoom if already running

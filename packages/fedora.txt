@@ -1,0 +1,157 @@
+# Fedora equivalents of packages/official.txt (Arch).
+# Validated against a Fedora container by scripts/test-bootstrap-fedora.sh.
+# Lines are dnf package names; # comments and blanks ignored.
+
+# --- shell / core CLI ---
+zsh
+tmux
+neovim
+vim-enhanced
+nano
+git
+wget2-wget
+curl
+ripgrep
+fd-find
+jq
+bc
+tree
+unzip
+zip
+man-db
+htop
+btop
+fastfetch
+ldns
+smartmontools
+btrfs-progs
+cifs-utils
+efibootmgr
+pciutils
+usbutils
+glow
+gitleaks
+tree-sitter-cli
+sox
+
+# --- wayland / sway desktop ---
+sway
+swaybg
+swayidle
+swaylock
+waybar
+wofi
+rofi
+foot
+alacritty
+grim
+slurp
+wl-clipboard
+wlsunset
+wev
+xorg-x11-server-Xwayland
+brightnessctl
+imv
+pcmanfm
+xdg-utils
+xdg-desktop-portal
+xdg-desktop-portal-wlr
+xdg-user-dirs
+SwayNotificationCenter
+mako
+wdisplays
+wlr-randr
+cliphist
+wf-recorder
+rofimoji
+dmenu
+wob
+libnotify
+libinput-utils
+
+# --- audio ---
+pipewire
+pipewire-alsa
+pipewire-pulseaudio
+pipewire-utils
+wireplumber
+pulseaudio-utils
+pavucontrol
+alsa-sof-firmware
+pipewire-gstreamer
+
+# --- bluetooth / network ---
+bluez
+bluez-tools
+NetworkManager
+network-manager-applet
+iwd
+iw
+openssh-server
+openssh-clients
+
+# --- graphics / firmware ---
+kernel
+linux-firmware
+microcode_ctl
+mesa-vulkan-drivers
+libva-intel-media-driver
+
+# --- power / laptop ---
+tlp
+
+# --- memory / system tuning (from the OOM work) ---
+earlyoom
+zram-generator
+
+# --- login stack ---
+greetd
+cage
+tuigreet
+ly
+
+# --- dev toolchains ---
+golang
+rust
+cargo
+python3-pip
+nodejs24
+nodejs24-npm
+protobuf-compiler
+dotnet-sdk-9.0
+dotnet-runtime-9.0
+aspnetcore-runtime-9.0
+valkey
+
+# --- containers / cloud ---
+podman
+flatpak
+kubernetes1.34-client
+helm
+azure-cli
+# opentofu is NOT terraform: HashiCorp relicensed under the BSL, so
+# Fedora ships the OpenTofu fork. Same HCL, different binary name.
+opentofu
+
+# --- documents / media ---
+libreoffice
+okular
+calibre
+ImageMagick
+GraphicsMagick
+graphviz
+pandoc-cli
+xournalpp
+unrtf
+vlc
+
+# --- apps ---
+firefox
+remmina
+freerdp
+filezilla
+zathura
+zathura-pdf-mupdf
+
+# --- fonts ---
+google-noto-emoji-fonts

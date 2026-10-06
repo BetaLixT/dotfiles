@@ -1,0 +1,12 @@
+# Installed on the Arch machine but not wanted verbatim elsewhere.
+# bootstrap-fedora.sh skips anything listed here and prints a reminder.
+#
+# Currently empty, and that is the point: packages/official.txt is a SNAPSHOT
+# of a real machine, so it accumulated speculative drivers (vulkan-radeon,
+# xf86-video-ati/amdgpu/nouveau) and a full X server. packages/fedora.txt was
+# hand-mapped rather than dumped, so none of that was carried across.
+#
+# The Fedora equivalents, if a machine ever needs them:
+#   AMD/NVIDIA Vulkan .. already in mesa-vulkan-drivers (one package, all ICDs)
+#   NVIDIA proprietary . akmod-nvidia xorg-x11-drv-nvidia   (RPM Fusion nonfree)
+#   full X session ..... xorg-x11-server-Xorg xorg-x11-xinit

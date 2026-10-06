@@ -1,0 +1,13 @@
+# Laptop / Intel-Iris-Xe specific. Skipped by bootstrap-fedora.sh --desktop.
+# Mirrors packages/official-laptop-only.txt.
+#
+# Deliberately NOT here: mesa-vulkan-drivers. On Arch the Vulkan ICD is split
+# per-vendor (vulkan-intel vs vulkan-radeon), so it was laptop-only. Fedora
+# ships one package containing every Mesa ICD, so it belongs on both profiles.
+tlp
+brightnessctl
+microcode_ctl
+libva-intel-media-driver
+iwd
+iw
+alsa-sof-firmware

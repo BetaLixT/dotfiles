@@ -15,61 +15,69 @@ return {
 	},
 
 	config = function()
-		local on_attach = function(client, bufnr)
-			local function buf_set_option(...)
-				vim.api.nvim_buf_set_option(bufnr, ...)
-			end
+		-- mason-lspconfig v2 dropped the `handlers` table: it now calls
+		-- vim.lsp.enable() on every installed server itself, so anything
+		-- passed through a handler (on_attach, capabilities, settings) was
+		-- silently ignored. Per-server config goes through vim.lsp.config()
+		-- instead, and buffer setup through an LspAttach autocmd. The
+		-- autocmd also covers roslyn, which has its own client outside mason.
+		vim.api.nvim_create_autocmd("LspAttach", {
+			group = vim.api.nvim_create_augroup("UserLspAttach", { clear = true }),
+			callback = function(args)
+				local client = vim.lsp.get_client_by_id(args.data.client_id)
+				local bufnr = args.buf
 
-			buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
+				local opts = { buffer = bufnr, noremap = true, silent = true }
+				vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+				vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+				vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+				vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+				-- vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
+				vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, opts)
+				vim.keymap.set('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, opts)
+				vim.keymap.set('n', '<leader>wl', function()
+					print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+				end, opts)
+				vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, opts)
+				vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+				vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+				vim.keymap.set('n', 'gl', vim.diagnostic.open_float, opts)
+				-- goto_prev/goto_next are deprecated; jump() with float = true
+				-- keeps their behaviour of opening the diagnostic float.
+				vim.keymap.set('n', '[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, opts)
+				vim.keymap.set('n', ']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, opts)
+				vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, opts)
+				vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, opts)
+				-- Code actions were missing entirely. They matter everywhere, but
+				-- especially in C#, where 'add using', 'implement interface' and
+				-- 'generate constructor' are all delivered as code actions.
+				vim.keymap.set({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, opts)
 
-			--[[
-			vim.api.nvim_buf_create_user_command(
-				bufnr,
-				"format",
-				function() vim.lsp.buf.format() end,
-				{ desc = "Format file with LSP" }
-			)
-			]]--
-
-			local opts = { buffer = bufnr, noremap = true, silent = true }
-			vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
-			vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-			vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-			vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
-			-- vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
-			vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, opts)
-			vim.keymap.set('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, opts)
-			vim.keymap.set('n', '<leader>wl', function()
-				print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-			end, opts)
-			vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, opts)
-			vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
-			vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-			vim.keymap.set('n', 'gl', vim.diagnostic.open_float, opts)
-			vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
-			vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
-			vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, opts)
-			vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, opts)
-			-- Code actions were missing entirely. They matter everywhere, but
-			-- especially in C#, where 'add using', 'implement interface' and
-			-- 'generate constructor' are all delivered as code actions.
-			vim.keymap.set({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, opts)
-
-			-- Inlay Hints
-			if client.server_capabilities.inlayHintProvider then
-				vim.lsp.inlay_hint.enable(true, {bufnr = bufnr})
-			else
-				vim.lsp.inlay_hint.enable(false, {bufnr = bufnr})
-			end
-		end
+				-- Inlay Hints
+				if client and client.server_capabilities.inlayHintProvider then
+					vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+				end
+			end,
+		})
 
 		local cmp = require('cmp')
 		local cmp_lsp = require("cmp_nvim_lsp")
-		local capabilities = vim.tbl_deep_extend(
-			"force",
-			{},
-			vim.lsp.protocol.make_client_capabilities(),
-			cmp_lsp.default_capabilities())
+
+		-- "*" merges into every server's config, including roslyn's.
+		vim.lsp.config("*", {
+			capabilities = cmp_lsp.default_capabilities(),
+		})
+
+		vim.lsp.config("lua_ls", {
+			settings = {
+				Lua = {
+					runtime = { version = "Lua 5.1" },
+					diagnostics = {
+						globals = { "vim", "it", "describe", "before_each", "after_each" },
+					}
+				}
+			}
+		})
 
 		require("fidget").setup({})
 		require("mason").setup()
@@ -78,30 +86,9 @@ return {
 				"lua_ls",
 				"rust_analyzer",
 				"gopls",
+				"yamlls",
+				"jsonls",
 			},
-			handlers = {
-				function(server_name)         -- default handler (optional)
-					require("lspconfig")[server_name].setup {
-						capabilities = capabilities,
-						on_attach = on_attach,
-					}
-				end,
-
-				["lua_ls"] = function()
-					local lspconfig = require("lspconfig")
-					lspconfig.lua_ls.setup {
-						capabilities = capabilities,
-						settings = {
-							Lua = {
-								runtime = { version = "Lua 5.1" },
-								diagnostics = {
-									globals = { "vim", "it", "describe", "before_each", "after_each" },
-								}
-							}
-						}
-					}
-				end,
-			}
 		})
 
 		local cmp_select = { behavior = cmp.SelectBehavior.Select }

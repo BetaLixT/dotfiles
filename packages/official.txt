@@ -130,6 +130,8 @@ xorg-xinit
 xorg-xwayland
 xournalpp
 yazi
+zathura
+zathura-pdf-mupdf
 zed
 zip
 zram-generator

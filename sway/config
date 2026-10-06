@@ -292,6 +292,22 @@ mode "options" {
 bindsym $mod+o mode "options"; exec ~/dotfiles/scripts/options-menu.sh
 
 # Floating terminal for TUI apps
+# Remmina must never inhibit sway's keybindings.
+#
+# RDP clients use the keyboard-shortcuts-inhibitor protocol to ask the
+# compositor to stop handling its own bindings, so keys like Win+1 reach the
+# remote machine. Remmina grabs on fullscreen and via its own toggle
+# (Ctrl+Alt+Enter) and releases otherwise -- so $mod+1 went to sway or to Windows
+# depending on grab state, which felt random.
+#
+# `disable` also deactivates any inhibitor already active on the window, so this
+# takes effect on a running session, not just new windows.
+#
+# THE COST: Win+1, Win+D, Win+E and friends can no longer be sent to Windows at
+# all. If that is ever needed, the alternative is to leave inhibiting enabled and
+# add --inhibited to the individual bindings that should still reach sway.
+for_window [app_id="org.remmina.Remmina"] shortcuts_inhibitor disable
+
 for_window [app_id="floating-term"] floating enable, resize set 1200 800, border pixel 2
 for_window [app_id="floating-term-small"] floating enable, resize set 600 400, border pixel 2
 # wdisplays. Matched loosely because the GTK app_id may be either the plain
@@ -375,6 +391,13 @@ gaps inner 3
 
 set $mon_samsung_upper "Samsung Electric Company S32B80P HNTT800050"
 set $mon_samsung_lower "Samsung Electric Company S32B80P HNTT900055"
+# Samsung LS24DG30X, 1920x1080@180. Enumerates as DP-1 today, but EDID-keyed so
+# the connector does not matter.
+#
+# NOTE THE TRAILING SPACES in the serial -- they are part of the EDID string and
+# the identifier does NOT match without them. Verified at runtime: the same
+# identifier trimmed reports "success: true" and silently matches nothing.
+set $mon_hdmi "Samsung Electric Company LS24DG30X H8CY100305   "
 
 output DP-5 scale 1
 output DP-6 scale 1
@@ -382,8 +405,17 @@ output $mon_samsung_lower scale 1.5
 output $mon_samsung_upper scale 1.5
 
 
-output HDMI-A-1 resolution 3440x1440 pos 0 0
 output eDP-1 pos 1520 1440
+# Same position as the laptop panel: this monitor stands in for it. With the lid
+# shut on AC, sway disables eDP-1 (see the bindswitch lines below) and this takes
+# its place. With the lid OPEN both occupy the same coordinates and overlap.
+# 120Hz, not the 180Hz this panel advertises. The small HDMI dock it hangs off
+# cannot carry 180 (~370-400MHz pixel clock, beyond HDMI 1.4's 340MHz ceiling).
+# The monitor's EDID offers 180 and the adapter passes that claim through, so
+# sway picks it and the link then fails to sustain it -- the screen flashes with
+# NOTHING logged by sway or the kernel, because the fault is below both.
+# Dropping to 120 fixed it. Available rates: 180, 120, 119.9, 60, 59.9, 50.
+output $mon_hdmi mode 1920x1080@120Hz pos 1520 1440
 output DP-5 pos 3440 1440
 output DP-6 pos 3440 240
 output $mon_samsung_lower pos 3440 1440
@@ -391,11 +423,29 @@ output $mon_samsung_upper pos 3440 0
 
 # Desk (Samsung) target first, portable (ASUS) as fallback, so a workspace
 # lands on the equivalent physical position in either setup.
-workspace 11 output HDMI-A-1
-workspace 1 output eDP-1
+workspace 1 output $mon_hdmi eDP-1
+workspace 2 output $mon_hdmi eDP-1
+workspace 3 output $mon_hdmi eDP-1
+workspace 4 output $mon_hdmi eDP-1
 workspace 10 output $mon_samsung_lower DP-5
 workspace 8 output $mon_samsung_upper DP-6
 workspace 9 output $mon_samsung_upper DP-6
+
+# Lid switch. Per sway(5) the switch is ON when the lid is SHUT.
+#
+# This only blanks the internal panel; whether the machine SUSPENDS is decided
+# by logind, configured in system/logind.conf.d/10-lid.conf:
+#   on AC      HandleLidSwitchExternalPower=ignore  -> stays awake, panel off
+#   on battery HandleLidSwitch=suspend              -> suspends, this is moot
+#
+# --locked so it still fires while swaylock is up, and --reload so the correct
+# state is reapplied if sway is reloaded with the lid already shut.
+#
+# With no external display attached this leaves sway with zero outputs until the
+# lid is opened. That is intended: the panel is not visible anyway, and keeping
+# it enabled just wastes power.
+bindswitch --reload --locked lid:on  output eDP-1 disable
+bindswitch --reload --locked lid:off output eDP-1 enable
 
 bindsym $mod+Control+Shift+Right move workspace to output right
 bindsym $mod+Control+Shift+Left move workspace to output left

@@ -57,23 +57,12 @@ return {
             end,
         })
 
-        -- Same keymaps the other servers get from lsp.lua's on_attach, applied
-        -- to cs/razor buffers. roslyn.nvim manages its own client, so it does
-        -- not go through mason-lspconfig's handler.
+        -- The general LSP keymaps come from the LspAttach autocmd in lsp.lua,
+        -- which covers this client too. Only the C#-specific one lives here.
         vim.api.nvim_create_autocmd("FileType", {
             pattern = { "cs", "razor" },
             callback = function(ev)
                 local o = { buffer = ev.buf, noremap = true, silent = true }
-                vim.keymap.set("n", "gd", vim.lsp.buf.definition, o)
-                vim.keymap.set("n", "gD", vim.lsp.buf.declaration, o)
-                vim.keymap.set("n", "gi", vim.lsp.buf.implementation, o)
-                vim.keymap.set("n", "gr", vim.lsp.buf.references, o)
-                vim.keymap.set("n", "K", vim.lsp.buf.hover, o)
-                vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, o)
-                vim.keymap.set("n", "<leader>D", vim.lsp.buf.type_definition, o)
-                vim.keymap.set("n", "<leader>f", vim.lsp.buf.format, o)
-                vim.keymap.set("n", "gl", vim.diagnostic.open_float, o)
-                vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, o)
 
                 -- <leader>f stays on Roslyn's formatter: it is whitespace-only
                 -- and respects .editorconfig, so it keeps diffs small on a

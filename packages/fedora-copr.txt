@@ -1,0 +1,16 @@
+# COPR repositories: Fedora's closest analogue to the AUR.
+# Format:  <owner>/<project>  <package> [<package>...]
+# Comments and blank lines ignored. Used by bootstrap-fedora.sh --only copr.
+#
+# Every project here was confirmed to exist via the COPR API before being
+# added, AND to publish a build for this Fedora release. COPR is
+# user-contributed and unsigned-by-default, same trust model as the AUR --
+# each line is a decision to trust that owner.
+#
+# Rejected: solopasha/hyprland (hyprpicker). The project exists and
+# `copr enable` succeeds, but it only builds for fedora-rawhide, so on a
+# stable release the repo is enabled and empty. Existence is not availability
+# -- test 3 checks the chroot list, not just HTTP 200.
+atim/lazygit    lazygit
+che/nerd-fonts  nerd-fonts
+lihaohong/yazi  yazi
